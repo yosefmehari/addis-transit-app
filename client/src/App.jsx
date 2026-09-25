@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Polyline, Tooltip, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, Tooltip, ZoomControl, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
@@ -83,6 +83,8 @@ const I18N = {
     beginning: 'Beginning (Origin)',
     ending: 'End (Destination)',
     clearMap: 'Clear Map 🧹',
+    cleanBaseMap: 'Clean Base Map 🪟',
+    showOverlays: 'Show Overlays 👁️',
     fullMap: 'Full Map ⛶',
     showMenu: 'Show Menu ◀',
     fitCity: 'Addis Full View 🌍',
@@ -90,13 +92,23 @@ const I18N = {
     layerLrt: 'LRT Train',
     layerBus: 'City Bus',
     layerRegional: 'Regional',
+    layerRoutes: 'Lines',
     layerLabels: 'Labels',
+    activeRoute: 'Active Route',
+    clearActiveRoute: 'Clear Line',
     mapLegend: 'Map Legend',
     searchOriginOrDest: 'Search Beginning station or Ending destination...',
     allFares: 'All Fares',
     viewOnMap: 'View Route on Map 🗺️',
     walkToTera: 'Walk to Station 🚶',
-    routesFound: 'routes found'
+    routesFound: 'routes found',
+    browserFullscreen: 'Fullscreen ⛶',
+    exitFullscreen: 'Exit Full ↙',
+    googleRoads: '🌟 Google Roads',
+    streetsHd: '🧭 Streets HD',
+    satelliteHybrid: '🛰️ Satellite',
+    osmStandard: '🗺️ OSM',
+    darkHd: '🌙 Dark HD'
   },
   am: {
     appTitle: 'አዲስ ትራንዚትና ታክሲ ማዕከል',
@@ -174,6 +186,8 @@ const I18N = {
     beginning: 'መነሻ ተራ',
     ending: 'መድረሻ',
     clearMap: 'ካርታ አፅዳ 🧹',
+    cleanBaseMap: 'ባዶ ካርታ 🪟',
+    showOverlays: 'ሁሉንም አሳይ 👁️',
     fullMap: 'ሙሉ ካርታ ⛶',
     showMenu: 'ምናሌ አሳይ ◀',
     fitCity: 'ሙሉ አዲስ አበባ 🌍',
@@ -181,13 +195,23 @@ const I18N = {
     layerLrt: 'ቀላል ባቡር',
     layerBus: 'የከተማ አውቶቡስ',
     layerRegional: 'የክልል አውቶቡስ',
+    layerRoutes: 'መስመሮች',
     layerLabels: 'ስሞች',
+    activeRoute: 'የተመረጠ መስመር',
+    clearActiveRoute: 'መስመር አጥፋ',
     mapLegend: 'የካርታ ምልክቶች',
     searchOriginOrDest: 'መነሻ ተራ ወይም መድረሻ ፈልግ...',
     allFares: 'ሁሉም ታሪፍ',
     viewOnMap: 'በካርታ ላይ አሳይ 🗺️',
     walkToTera: 'በእግር ሂድ 🚶',
-    routesFound: 'መስመሮች ተገኝተዋል'
+    routesFound: 'መስመሮች ተገኝተዋል',
+    browserFullscreen: 'ሙሉ ስክሪን ⛶',
+    exitFullscreen: 'ውጣ ↙',
+    googleRoads: '🌟 ጎግል ካርታ',
+    streetsHd: '🧭 ጎዳናዎች HD',
+    satelliteHybrid: '🛰️ ሳተላይት',
+    osmStandard: '🗺️ ኦፕን ስትሪት',
+    darkHd: '🌙 የሌሊት HD'
   },
   ti: {
     appTitle: 'ኣዲስ ትራንዚትን ታክሲን',
@@ -265,6 +289,8 @@ const I18N = {
     beginning: 'መበገሲ ተራ',
     ending: 'መዕረፊ',
     clearMap: 'ካርታ ኣጽሪ 🧹',
+    cleanBaseMap: 'ባዶ ካርታ 🪟',
+    showOverlays: 'ኩሉ ኣርኢ 👁️',
     fullMap: 'ምሉእ ካርታ ⛶',
     showMenu: 'ዝርዝር ኣርኢ ◀',
     fitCity: 'ምሉእ ኣዲስ ኣበባ 🌍',
@@ -272,13 +298,23 @@ const I18N = {
     layerLrt: 'ቀሊል ባቡር',
     layerBus: 'ኣውቶቡስ ከተማ',
     layerRegional: 'ናይ ክልል',
+    layerRoutes: 'መስመራት',
     layerLabels: 'ስማት',
+    activeRoute: 'ዝተመረጸ መስመር',
+    clearActiveRoute: 'መስመር ኣጥፍእ',
     mapLegend: 'መብርሂ ምልክታት',
     searchOriginOrDest: 'መበገሲ ወይ መዕረፊ ድለይ...',
     allFares: 'ኩሉ ዋጋ',
     viewOnMap: 'ኣብ ካርታ ርአ 🗺️',
     walkToTera: 'ብእግሪ ኺድ 🚶',
-    routesFound: 'መስመራት ተረኺቦም'
+    routesFound: 'መስመራት ተረኺቦም',
+    browserFullscreen: 'ምሉእ ስክሪን ⛶',
+    exitFullscreen: 'ውጻእ ↙',
+    googleRoads: '🌟 ጎጉል ካርታ',
+    streetsHd: '🧭 ጎደናታት HD',
+    satelliteHybrid: '🛰️ ሳተላይት',
+    osmStandard: '🗺️ ኦፕን ስትሪት',
+    darkHd: '🌙 ጸሊም HD'
   }
 };
 
@@ -310,58 +346,97 @@ function playWeyalaAudio(text) {
   }
 }
 
-// Custom Leaflet Markers
+// Custom Leaflet Markers - Crisp, Non-Overlapping & Clear Visual Hierarchy
 function createCustomIcon(category, isSelected = false, isOrigin = false, isDest = false, isTransfer = false, isTaxiTera = false, isRegional = false, isUserLocation = false) {
   let bgColor = '#0284c7';
-  let iconSvg = `<circle cx="16" cy="16" r="6" fill="#ffffff" />`;
+  let iconSvg = `<circle cx="12" cy="12" r="5" fill="#ffffff" />`;
 
   if (isUserLocation) {
-    bgColor = '#3b82f6';
-    iconSvg = `<circle cx="16" cy="16" r="6" fill="#ffffff" /><circle cx="16" cy="16" r="10" stroke="#ffffff" stroke-width="2" fill="none"/>`;
+    bgColor = '#2563eb';
+    iconSvg = `<circle cx="12" cy="12" r="5" fill="#ffffff" /><circle cx="12" cy="12" r="9" stroke="#ffffff" stroke-width="2" fill="none"/>`;
   } else if (isRegional) {
-    bgColor = '#c026d3';
-    iconSvg = `<path d="M7 10h18v10H7zM9 20v2M23 20v2M10 14h12M12 7l4-3 4 3" stroke="#ffffff" stroke-width="2" stroke-linecap="round" fill="none"/>`;
+    bgColor = '#9333ea';
+    iconSvg = `<path d="M5 8h14v8H5zM6 16v2M18 16v2M7 11h10M9 6l3-2 3 2" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" fill="none"/>`;
   } else if (isTaxiTera) {
     bgColor = '#eab308';
-    iconSvg = `<path d="M7 17l2-5h14l2 5v7h-3v-2H10v2H7v-7zM10 17h12M11 20h2M19 20h2M13 9h6v3h-6z" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>`;
+    iconSvg = `<path d="M5 13l1.5-4h11l1.5 4v6h-2.5v-1.5h-9v1.5H5v-6zM7 13h10M8 15h1.5M14.5 15h1.5M9.5 7h5v2h-5z" stroke="#0f172a" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>`;
   } else if (category === 'lrt_station') {
-    bgColor = '#16a34a';
-    iconSvg = `<path d="M10 11h12v7H10zM12 21l-2 3M20 21l2 3M12 15h.01M20 15h.01" stroke="#ffffff" stroke-width="2" stroke-linecap="round" fill="none"/>`;
+    bgColor = '#059669';
+    iconSvg = `<path d="M7 8h10v6H7zM8 17l-1.5 2M16 17l1.5 2M8.5 12h.01M15.5 12h.01" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" fill="none"/>`;
   } else if (category === 'interchange') {
-    bgColor = '#8b5cf6';
-    iconSvg = `<path d="M9 12l-4 4 4 4M23 12l4 4-4 4M5 16h22" stroke="#ffffff" stroke-width="2" stroke-linecap="round" fill="none"/>`;
+    bgColor = '#7c3aed';
+    iconSvg = `<path d="M7 9l-3 3 3 3M17 9l3 3-3 3M4 12h16" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" fill="none"/>`;
   } else if (category === 'bus_stop') {
     bgColor = '#ea580c';
-    iconSvg = `<path d="M10 10h12v9H10zM12 22v-3M20 22v-3M13 14h6" stroke="#ffffff" stroke-width="2" stroke-linecap="round" fill="none"/>`;
+    iconSvg = `<path d="M7 7h10v7H7zM8 17v-2M16 17v-2M9 11h6" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" fill="none"/>`;
   }
 
-  if (isOrigin) bgColor = '#10b981';
-  if (isDest) bgColor = '#ef4444';
-  if (isTransfer) bgColor = '#f59e0b';
+  if (isOrigin) {
+    bgColor = '#10b981';
+    iconSvg = `<circle cx="12" cy="12" r="5" fill="#ffffff" />`;
+  }
+  if (isDest) {
+    bgColor = '#ef4444';
+    iconSvg = `<circle cx="12" cy="12" r="5" fill="#ffffff" />`;
+  }
+  if (isTransfer) {
+    bgColor = '#f59e0b';
+    iconSvg = `<path d="M6 12l3-3 3 3M18 12l-3 3-3-3" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" fill="none"/>`;
+  }
 
-  const size = isSelected || isOrigin || isDest || isTransfer ? 38 : (isTaxiTera || isRegional || isUserLocation ? 32 : 30);
-  const stroke = isSelected ? '#ffffff' : (isTaxiTera ? '#000000' : 'rgba(255,255,255,0.85)');
-  const strokeWidth = isSelected ? 3 : 2;
+  const isHighlighted = isSelected || isOrigin || isDest || isTransfer;
 
+  if (isHighlighted) {
+    const size = 36;
+    const html = `
+      <div style="
+        width: ${size}px;
+        height: ${size}px;
+        background: ${bgColor};
+        border-radius: 50% 50% 50% 0;
+        transform: rotate(-45deg);
+        border: 2.5px solid #ffffff;
+        box-shadow: 0 4px 14px rgba(0,0,0,0.4), 0 0 12px ${bgColor}88;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+      ">
+        <div style="transform: rotate(45deg); display: flex; align-items: center; justify-content: center;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            ${iconSvg}
+          </svg>
+        </div>
+      </div>
+    `;
+    return L.divIcon({
+      className: 'custom-transit-pin-selected',
+      html,
+      iconSize: [size, size],
+      iconAnchor: [size / 2, size],
+      popupAnchor: [0, -size]
+    });
+  }
+
+  // Crisp, compact unselected transit marker badge to prevent visual clutter
+  const size = isTaxiTera || isRegional ? 24 : 22;
+  const strokeColor = isTaxiTera ? '#451a03' : '#ffffff';
   const html = `
     <div style="
       width: ${size}px;
       height: ${size}px;
       background: ${bgColor};
-      border-radius: 50% 50% 50% 0;
-      transform: rotate(-45deg);
-      border: ${strokeWidth}px solid ${stroke};
-      box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+      border-radius: 50%;
+      border: 2px solid ${strokeColor};
+      box-shadow: 0 2px 7px rgba(0,0,0,0.28);
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: all 0.2s ease;
+      cursor: pointer;
     ">
-      <div style="transform: rotate(45deg); display: flex; align-items: center; justify-content: center;">
-        <svg width="${size * 0.55}" height="${size * 0.55}" viewBox="0 0 32 32" fill="none">
-          ${iconSvg}
-        </svg>
-      </div>
+      <svg width="${size * 0.6}" height="${size * 0.6}" viewBox="0 0 24 24" fill="none">
+        ${iconSvg}
+      </svg>
     </div>
   `;
 
@@ -369,20 +444,44 @@ function createCustomIcon(category, isSelected = false, isOrigin = false, isDest
     className: 'custom-transit-pin',
     html,
     iconSize: [size, size],
-    iconAnchor: [size / 2, size],
-    popupAnchor: [0, -size]
+    iconAnchor: [size / 2, size / 2],
+    popupAnchor: [0, -size / 2 - 4]
   });
 }
 
-function MapController({ center, zoom, bounds }) {
+function MapController({ center, zoom, bounds, clearSignal, isSidebarOpen }) {
   const map = useMap();
+
+  // Invalidate map size whenever sidebar toggles or window changes so the map is always 100% full
   useEffect(() => {
+    map.invalidateSize();
+    const t1 = setTimeout(() => map.invalidateSize(), 50);
+    const t2 = setTimeout(() => map.invalidateSize(), 150);
+    const t3 = setTimeout(() => map.invalidateSize(), 350);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+    };
+  }, [isSidebarOpen, map]);
+
+  useEffect(() => {
+    const handleResize = () => map.invalidateSize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [map]);
+
+  useEffect(() => {
+    if (clearSignal) {
+      map.closePopup();
+    }
     if (bounds && bounds.length > 0) {
       map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
     } else if (center) {
-      map.flyTo(center, zoom || 13, { duration: 1.2 });
+      map.flyTo(center, zoom || 12, { duration: 0.8 });
     }
-  }, [center, zoom, bounds, map]);
+  }, [center, zoom, bounds, clearSignal, map]);
+
   return null;
 }
 
@@ -456,16 +555,19 @@ export default function App() {
   const [selectedRoute, setSelectedRoute] = useState(null);
   const [taxiDestinationQuery, setTaxiDestinationQuery] = useState('Bole');
   const [searchQuery, setSearchQuery] = useState('');
-  const [mapStyle, setMapStyle] = useState('light'); // default to 'light' for crystal clear high-contrast view
+  const [mapStyle, setMapStyle] = useState('google_streets'); // default to crystal clear Google Roads
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
-  // Map Layer Toggles for Maximum Clarity
+  // Map Layer Toggles: showRouteLines and showStationLabels ON by default for full, clear map
   const [showTaxiLayer, setShowTaxiLayer] = useState(true);
   const [showLrtLayer, setShowLrtLayer] = useState(true);
   const [showBusLayer, setShowBusLayer] = useState(true);
   const [showRegionalLayer, setShowRegionalLayer] = useState(true);
-  const [showStationLabels, setShowStationLabels] = useState(false);
+  const [showRouteLines, setShowRouteLines] = useState(true); // Full transit lines by default!
+  const [showStationLabels, setShowStationLabels] = useState(true); // Clear station name labels by default!
   const [showMapLegend, setShowMapLegend] = useState(true);
+  const [clearSignal, setClearSignal] = useState(0);
 
   // Beginning ➔ End Taxi Line Selection & Filtering
   const [selectedTaxiLine, setSelectedTaxiLine] = useState(null);
@@ -473,24 +575,53 @@ export default function App() {
   const [originFilter, setOriginFilter] = useState('all');
   const [fareFilter, setFareFilter] = useState('all');
 
-  const [mapCenter, setMapCenter] = useState([9.0108, 38.7511]);
-  const [mapZoom, setMapZoom] = useState(13);
+  // Addis Ababa Full Metropolitan Extent: Center [9.0150, 38.7700], Zoom 12
+  const [mapCenter, setMapCenter] = useState([9.0150, 38.7700]);
+  const [mapZoom, setMapZoom] = useState(12);
   const [routeBounds, setRouteBounds] = useState(null);
 
   const t = I18N[lang] || I18N.en;
 
   const tileLayers = {
-    standard: {
-      url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-      attribution: '&copy; OpenStreetMap'
+    google_streets: {
+      id: 'google_streets',
+      label: t.googleRoads || '🌟 Google Roads',
+      url: 'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
+      attribution: '&copy; Google Maps',
+      subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+      maxZoom: 20
     },
-    light: {
+    voyager: {
+      id: 'voyager',
+      label: t.streetsHd || '🧭 Streets HD',
       url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-      attribution: '&copy; CartoDB & OpenStreetMap'
+      attribution: '&copy; CartoDB & OpenStreetMap',
+      subdomains: ['a', 'b', 'c', 'd'],
+      maxZoom: 19
+    },
+    google_hybrid: {
+      id: 'google_hybrid',
+      label: t.satelliteHybrid || '🛰️ Satellite',
+      url: 'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
+      attribution: '&copy; Google Maps',
+      subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+      maxZoom: 20
+    },
+    standard: {
+      id: 'standard',
+      label: t.osmStandard || '🗺️ OSM',
+      url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      attribution: '&copy; OpenStreetMap',
+      subdomains: ['a', 'b', 'c'],
+      maxZoom: 19
     },
     dark: {
+      id: 'dark',
+      label: t.darkHd || '🌙 Dark HD',
       url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-      attribution: '&copy; CartoDB & OpenStreetMap'
+      attribution: '&copy; CartoDB & OpenStreetMap',
+      subdomains: ['a', 'b', 'c', 'd'],
+      maxZoom: 19
     }
   };
 
@@ -677,6 +808,8 @@ export default function App() {
     }
   };
 
+  const areAllLayersOff = !showTaxiLayer && !showLrtLayer && !showBusLayer && !showRegionalLayer && !showRouteLines && !showStationLabels;
+
   const handleClearMap = () => {
     setSelectedRoute(null);
     setSelectedTaxiLine(null);
@@ -685,16 +818,57 @@ export default function App() {
     setOriginId('');
     setDestId('');
     setRouteBounds(null);
-    setMapCenter([9.0108, 38.7511]);
-    setMapZoom(13);
+    setShowRouteLines(true);
+    setClearSignal(prev => prev + 1);
+    setMapCenter([9.0150, 38.7700]);
+    setMapZoom(12);
+  };
+
+  const handleToggleAllLayers = () => {
+    if (areAllLayersOff) {
+      setShowTaxiLayer(true);
+      setShowLrtLayer(true);
+      setShowBusLayer(true);
+      setShowRegionalLayer(true);
+      setShowRouteLines(true);
+      setShowStationLabels(true);
+    } else {
+      setShowTaxiLayer(false);
+      setShowLrtLayer(false);
+      setShowBusLayer(false);
+      setShowRegionalLayer(false);
+      setShowRouteLines(false);
+      setShowStationLabels(false);
+      setSelectedRoute(null);
+      setSelectedTaxiLine(null);
+      setWalkingDestination(null);
+      setJourneyPlan(null);
+      setClearSignal(prev => prev + 1);
+    }
   };
 
   const handleFitAddisCity = () => {
     setRouteBounds([
-      [9.0900, 38.6800],
-      [8.8800, 38.8850]
+      [9.0800, 38.6850],
+      [8.8850, 38.8750]
     ]);
   };
+
+  const toggleBrowserFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => {});
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen().then(() => setIsFullscreen(false)).catch(() => {});
+      }
+    }
+  };
+
+  useEffect(() => {
+    const handleFsChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', handleFsChange);
+    return () => document.removeEventListener('fullscreenchange', handleFsChange);
+  }, []);
 
   // Handle Geolocation
   const handleLocateMe = () => {
@@ -2389,32 +2563,64 @@ export default function App() {
       {/* ==================================================== */}
       <div style={{ flex: 1, position: 'relative', height: '100%' }}>
 
-        {/* Floating Menu Button when sidebar is closed */}
+        {/* Floating Quick Action Bar when sidebar is closed */}
         {!isSidebarOpen && (
-          <button
-            onClick={() => setIsSidebarOpen(true)}
-            style={{
-              position: 'absolute',
-              top: '16px',
-              left: '16px',
-              zIndex: 1000,
-              background: '#0f172a',
-              color: '#ffffff',
-              border: 'none',
-              borderRadius: '10px',
-              padding: '9px 15px',
-              fontSize: '12.5px',
-              fontWeight: '700',
-              cursor: 'pointer',
-              boxShadow: '0 4px 18px rgba(0,0,0,0.25)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px'
-            }}
-          >
-            <span>☰</span>
-            <span>{t.openSidebar}</span>
-          </button>
+          <div style={{
+            position: 'absolute',
+            top: '16px',
+            left: '16px',
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            background: 'rgba(255, 255, 255, 0.95)',
+            backdropFilter: 'blur(8px)',
+            padding: '6px 10px',
+            borderRadius: '12px',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+            border: '1px solid #cbd5e1'
+          }}>
+            <button
+              onClick={() => setIsSidebarOpen(true)}
+              style={{
+                background: '#0f172a',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '7px 12px',
+                fontSize: '12px',
+                fontWeight: '700',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+            >
+              <span>☰</span>
+              <span>{t.openSidebar}</span>
+            </button>
+
+            <div style={{ width: '1px', height: '22px', background: '#cbd5e1' }} />
+
+            <input
+              type="text"
+              placeholder={t.searchOriginOrDest}
+              value={taxiLineQuery}
+              onChange={e => {
+                setTaxiLineQuery(e.target.value);
+                if (!isSidebarOpen) setIsSidebarOpen(true);
+              }}
+              style={{
+                border: 'none',
+                background: 'transparent',
+                fontSize: '12px',
+                fontWeight: '600',
+                color: '#0f172a',
+                outline: 'none',
+                width: '180px'
+              }}
+            />
+          </div>
         )}
 
         {/* Floating Controls Bar */}
@@ -2452,6 +2658,29 @@ export default function App() {
             <span>{isSidebarOpen ? t.fullMap : t.showMenu}</span>
           </button>
 
+          {/* Fullscreen Browser Mode */}
+          <button
+            onClick={toggleBrowserFullscreen}
+            title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen Map'}
+            style={{
+              background: isFullscreen ? '#0f172a' : '#ffffff',
+              border: `1px solid ${isFullscreen ? '#0f172a' : '#cbd5e1'}`,
+              borderRadius: '10px',
+              padding: '8px 12px',
+              fontSize: '12px',
+              fontWeight: '700',
+              color: isFullscreen ? '#ffffff' : '#0f172a',
+              cursor: 'pointer',
+              boxShadow: '0 4px 14px rgba(0,0,0,0.1)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px'
+            }}
+          >
+            <span>{isFullscreen ? '↙' : '⛶'}</span>
+            <span>{isFullscreen ? t.exitFullscreen : t.browserFullscreen}</span>
+          </button>
+
           {/* Clear Map */}
           <button
             onClick={handleClearMap}
@@ -2473,6 +2702,30 @@ export default function App() {
           >
             <span>🧹</span>
             <span>{t.clearMap}</span>
+          </button>
+
+          {/* Clean Base Map / Show Overlays Toggle */}
+          <button
+            onClick={handleToggleAllLayers}
+            title={areAllLayersOff ? t.showOverlays : t.cleanBaseMap}
+            style={{
+              background: areAllLayersOff ? '#0f172a' : '#ffffff',
+              border: `1px solid ${areAllLayersOff ? '#0f172a' : '#cbd5e1'}`,
+              borderRadius: '10px',
+              padding: '8px 12px',
+              fontSize: '12px',
+              fontWeight: '700',
+              color: areAllLayersOff ? '#ffffff' : '#0f172a',
+              cursor: 'pointer',
+              boxShadow: '0 4px 14px rgba(0,0,0,0.1)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            <span>{areAllLayersOff ? '👁️' : '🪟'}</span>
+            <span>{areAllLayersOff ? t.showOverlays : t.cleanBaseMap}</span>
           </button>
 
           {/* Addis Full View */}
@@ -2515,6 +2768,7 @@ export default function App() {
               { key: 'lrt', label: '🚊 LRT', active: showLrtLayer, toggle: () => setShowLrtLayer(!showLrtLayer) },
               { key: 'bus', label: '🚌 Bus', active: showBusLayer, toggle: () => setShowBusLayer(!showBusLayer) },
               { key: 'regional', label: '🏢 Reg', active: showRegionalLayer, toggle: () => setShowRegionalLayer(!showRegionalLayer) },
+              { key: 'routes', label: '🛣️ ' + t.layerRoutes, active: showRouteLines, toggle: () => setShowRouteLines(!showRouteLines) },
               { key: 'labels', label: '🏷️ Names', active: showStationLabels, toggle: () => setShowStationLabels(!showStationLabels) }
             ].map(layer => (
               <button
@@ -2537,7 +2791,7 @@ export default function App() {
             ))}
           </div>
 
-          {/* Theme Selector */}
+          {/* Crystal Clear Theme Selector */}
           <div style={{
             background: '#ffffff',
             border: '1px solid #cbd5e1',
@@ -2547,9 +2801,11 @@ export default function App() {
             boxShadow: '0 4px 14px rgba(0,0,0,0.1)'
           }}>
             {[
-              { id: 'standard', label: '🗺️ Map' },
-              { id: 'light', label: '☀️ Light' },
-              { id: 'dark', label: '🌙 Dark' }
+              { id: 'google_streets', label: t.googleRoads },
+              { id: 'voyager', label: t.streetsHd },
+              { id: 'google_hybrid', label: t.satelliteHybrid },
+              { id: 'standard', label: t.osmStandard },
+              { id: 'dark', label: t.darkHd }
             ].map(style => (
               <button
                 key={style.id}
@@ -2570,6 +2826,81 @@ export default function App() {
             ))}
           </div>
         </div>
+
+        {/* Floating Active Transit Route Card */}
+        {selectedRoute && (
+          <div style={{
+            position: 'absolute',
+            top: selectedTaxiLine ? '136px' : '74px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 1000,
+            background: 'rgba(255, 255, 255, 0.97)',
+            backdropFilter: 'blur(8px)',
+            border: `2px solid ${selectedRoute.color_hex || '#2563eb'}`,
+            borderRadius: '14px',
+            padding: '10px 16px',
+            boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '14px',
+            maxWidth: '92%',
+            flexWrap: 'wrap'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '20px' }}>
+                {selectedRoute.transport_type === 'lrt' ? '🚊' : '🚌'}
+              </span>
+              <div>
+                <div style={{ fontSize: '13.5px', fontWeight: '800', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{
+                    background: selectedRoute.color_hex || '#2563eb',
+                    color: '#ffffff',
+                    padding: '2px 6px',
+                    borderRadius: '5px',
+                    fontSize: '11px',
+                    fontWeight: '800'
+                  }}>
+                    {selectedRoute.route_code}
+                  </span>
+                  <span>{getRouteTitle(selectedRoute)}</span>
+                </div>
+                <div style={{ fontSize: '11px', color: '#64748b' }}>
+                  {selectedRoute.frequency_mins} mins frequency • {selectedRoute.operating_hours}
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', borderLeft: '1px solid #e2e8f0', paddingLeft: '12px' }}>
+              <span style={{ background: '#dcfce7', color: '#15803d', padding: '3px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: '800' }}>
+                {Number(selectedRoute.fare_etb).toFixed(2)} {t.etb}
+              </span>
+              <span style={{ background: '#f1f5f9', color: '#475569', padding: '3px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: '700' }}>
+                ~{selectedRoute.estimated_mins} mins ({selectedRoute.distance_km} km)
+              </span>
+              <button
+                onClick={() => setSelectedRoute(null)}
+                style={{
+                  border: 'none',
+                  background: '#fee2e2',
+                  color: '#991b1b',
+                  borderRadius: '50%',
+                  width: '24px',
+                  height: '24px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: '800',
+                  fontSize: '12px'
+                }}
+                title={t.clearActiveRoute}
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Floating Active Beginning ➔ End Taxi Card */}
         {selectedTaxiLine && (
@@ -2676,18 +3007,37 @@ export default function App() {
           center={mapCenter}
           zoom={mapZoom}
           style={{ height: '100%', width: '100%' }}
-          zoomControl={true}
+          zoomControl={false}
+          minZoom={10}
+          maxZoom={20}
         >
-          <MapController center={mapCenter} zoom={mapZoom} bounds={routeBounds} />
+          <ZoomControl position="bottomleft" />
+          <MapController center={mapCenter} zoom={mapZoom} bounds={routeBounds} clearSignal={clearSignal} isSidebarOpen={isSidebarOpen} />
 
           <TileLayer
+            key={mapStyle}
             url={tileLayers[mapStyle].url}
             attribution={tileLayers[mapStyle].attribution}
+            subdomains={tileLayers[mapStyle].subdomains || 'abc'}
+            maxZoom={tileLayers[mapStyle].maxZoom || 19}
           />
 
           {/* Active Beginning ➔ End Minibus Route Line */}
           {selectedTaxiLine && selectedTaxiLine.destCoord && (
             <>
+              {/* White casing outline for maximum contrast */}
+              <Polyline
+                positions={[
+                  [selectedTaxiLine.origin_lat, selectedTaxiLine.origin_lng],
+                  selectedTaxiLine.destCoord
+                ]}
+                pathOptions={{
+                  color: '#ffffff',
+                  weight: 10,
+                  opacity: 0.95,
+                  lineCap: 'round'
+                }}
+              />
               <Polyline
                 positions={[
                   [selectedTaxiLine.origin_lat, selectedTaxiLine.origin_lng],
@@ -2697,7 +3047,8 @@ export default function App() {
                   color: '#eab308',
                   weight: 6,
                   dashArray: '10, 8',
-                  opacity: 0.95
+                  opacity: 1.0,
+                  lineCap: 'round'
                 }}
               />
               {/* Highlight Origin Marker */}
@@ -2715,8 +3066,8 @@ export default function App() {
                     </div>
                   </div>
                 </Popup>
-                <Tooltip permanent={true} direction="top">
-                  <span style={{ fontWeight: '800', color: '#16a34a' }}>
+                <Tooltip permanent={true} direction="top" className="transit-station-label-origin">
+                  <span>
                     🟢 {lang === 'am' ? selectedTaxiLine.origin_am.replace(' ታክሲ ተራ', '').replace(' ታክሲ ማቆሚያ', '') : selectedTaxiLine.origin_en.replace(' Taxi Tera', '').replace(' Taxi Stand', '')}
                   </span>
                 </Tooltip>
@@ -2736,8 +3087,8 @@ export default function App() {
                     </div>
                   </div>
                 </Popup>
-                <Tooltip permanent={true} direction="top">
-                  <span style={{ fontWeight: '800', color: '#dc2626' }}>
+                <Tooltip permanent={true} direction="top" className="transit-station-label-dest">
+                  <span>
                     🔴 {lang === 'am' && selectedTaxiLine.dest_am ? selectedTaxiLine.dest_am : selectedTaxiLine.dest_en}
                   </span>
                 </Tooltip>
@@ -2783,35 +3134,53 @@ export default function App() {
             if (isBus && !showBusLayer) return null;
 
             const isSelected = selectedRoute && selectedRoute.id === route.id;
+
+            // Clean Map: Hide background routes when showRouteLines is off and this route is not selected
+            if (!showRouteLines && !isSelected) return null;
+
             const lineColor = isSelected ? '#ef4444' : (route.color_hex || '#2563eb');
-            const lineWeight = isSelected ? 6 : 4;
-            const lineOpacity = selectedRoute ? (isSelected ? 1.0 : 0.2) : 0.8;
+            const lineWeight = isSelected ? 8 : (isLrt ? 6 : 4);
+            const lineOpacity = isSelected ? 1.0 : (selectedRoute ? 0.25 : 0.88);
 
             if (!route.path_coordinates || route.path_coordinates.length === 0) return null;
 
             return (
-              <Polyline
-                key={`route-${route.id}`}
-                positions={route.path_coordinates}
-                pathOptions={{
-                  color: lineColor,
-                  weight: lineWeight,
-                  opacity: lineOpacity,
-                  dashArray: route.transport_type === 'lrt' ? '8, 8' : undefined
-                }}
-                eventHandlers={{
-                  click: () => {
-                    setSelectedRoute(route);
-                    setRouteBounds(route.path_coordinates);
-                  }
-                }}
-              >
-                <Tooltip sticky>
-                  <div style={{ padding: '2px', fontSize: '11.5px', fontWeight: '600' }}>
-                    {getRouteTitle(route)} ({Number(route.fare_etb).toFixed(2)} {t.etb})
-                  </div>
-                </Tooltip>
-              </Polyline>
+              <React.Fragment key={`route-${route.id}`}>
+                {/* Route casing underneath for maximum contrast and pop */}
+                <Polyline
+                  positions={route.path_coordinates}
+                  pathOptions={{
+                    color: '#ffffff',
+                    weight: lineWeight + 3,
+                    opacity: 0.95,
+                    lineCap: 'round',
+                    lineJoin: 'round'
+                  }}
+                />
+                <Polyline
+                  positions={route.path_coordinates}
+                  pathOptions={{
+                    color: lineColor,
+                    weight: lineWeight,
+                    opacity: lineOpacity,
+                    dashArray: isLrt ? undefined : (route.transport_type === 'minibus' ? '8, 8' : undefined),
+                    lineCap: 'round',
+                    lineJoin: 'round'
+                  }}
+                  eventHandlers={{
+                    click: () => {
+                      setSelectedRoute(route);
+                      setRouteBounds(route.path_coordinates);
+                    }
+                  }}
+                >
+                  <Tooltip sticky>
+                    <div style={{ padding: '3px 6px', fontSize: '12px', fontWeight: '700' }}>
+                      {getRouteTitle(route)} ({Number(route.fare_etb).toFixed(2)} {t.etb})
+                    </div>
+                  </Tooltip>
+                </Polyline>
+              </React.Fragment>
             );
           })}
 
@@ -2842,9 +3211,9 @@ export default function App() {
                 </div>
               </Popup>
               {showStationLabels && (
-                <Tooltip permanent direction="bottom">
-                  <span style={{ fontSize: '9.5px', fontWeight: '700', color: '#86198f' }}>
-                    {lang === 'am' ? reg.name_am : reg.name_en}
+                <Tooltip permanent direction="bottom" offset={[0, 8]} className="transit-station-label">
+                  <span>
+                    🏢 {lang === 'am' ? reg.name_am : reg.name_en}
                   </span>
                 </Tooltip>
               )}
@@ -2912,9 +3281,9 @@ export default function App() {
                 </div>
               </Popup>
               {showStationLabels && (
-                <Tooltip permanent direction="bottom">
-                  <span style={{ fontSize: '9.5px', fontWeight: '700', color: '#854d0e' }}>
-                    {lang === 'am' ? tera.name_am.replace(' ታክሲ ተራ', '').replace(' ታክሲ ማቆሚያ', '') : tera.name_en.replace(' Taxi Tera', '').replace(' Taxi Stand', '')}
+                <Tooltip permanent direction="bottom" offset={[0, 8]} className="transit-station-label">
+                  <span>
+                    🚕 {lang === 'am' ? tera.name_am.replace(' ታክሲ ተራ', '').replace(' ታክሲ ማቆሚያ', '') : tera.name_en.replace(' Taxi Tera', '').replace(' Taxi Stand', '')}
                   </span>
                 </Tooltip>
               )}
@@ -3006,8 +3375,8 @@ export default function App() {
                   </div>
                 </Popup>
                 {showStationLabels && (
-                  <Tooltip permanent direction="bottom">
-                    <span style={{ fontSize: '9.5px', fontWeight: '700', color: '#334155' }}>
+                  <Tooltip permanent direction="bottom" offset={[0, 8]} className="transit-station-label">
+                    <span>
                       {getStopName(stop)}
                     </span>
                   </Tooltip>
