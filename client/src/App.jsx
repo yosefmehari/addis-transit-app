@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Polyline, Tooltip, ZoomControl, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, Tooltip, ZoomControl, useMap, Circle, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import { ADDIS_STARTING_LANDMARKS, COMPLETE_TAXI_TERAS } from './taxiPlacesData';
+
 
 // ==========================================
 // Translations (English, Amharic, Tigrinya)
@@ -108,7 +110,34 @@ const I18N = {
     streetsHd: '🧭 Streets HD',
     satelliteHybrid: '🛰️ Satellite',
     osmStandard: '🗺️ OSM',
-    darkHd: '🌙 Dark HD'
+    darkHd: '🌙 Dark HD',
+    beginningPlaceholder: 'Filter Beginning / Origin (e.g. Mexico, Piazza, Bole)...',
+    endingPlaceholder: 'Filter End Destination (e.g. Megenagna, Ayat, Mercato)...',
+    clearFilters: 'Clear Filters',
+    swapBegEnd: 'Swap Beginning ⇄ End',
+    filterByBegEnd: 'Filter by Beginning & End',
+    popularDests: 'Popular End Destinations:',
+    submitShowOnMap: 'Show Route on Map 🚀',
+    noMatchingRouteFound: 'No exact station found. Showing best corridor on map.',
+    tabPlaceMap: 'Place Map & Guide 🗺️',
+    placeMapSubtitle: 'Clear maps, exact landmarks & step-by-step walking directions to taxi stations',
+    howToGetHere: 'How to Get to this Station 🚶',
+    stationPlaceGuide: 'Station Place & Walking Guide',
+    startFrom: 'Start walking from:',
+    myLocation: 'My Location (GPS) 📍',
+    popularLandmarks: 'Choose Addis Landmark / Station 🏛️',
+    clickMapToSetOrigin: 'Or click anywhere on map to set your walking start 🖱️',
+    nearbyLandmarks: 'Key Landmarks around this station:',
+    walkingSteps: 'Step-by-step walking instructions:',
+    queueLanes: 'Minibus Queue Lanes & Boarding Spots:',
+    openInGoogleMapsWalk: 'Live Google Maps Walking Navigation 🗺️',
+    zoomStationHd: 'Zoom to Station HD 🔍',
+    fitWalkingRoute: 'View Full Walking Route 🚶',
+    estWalkTime: 'Estimated Walking Time',
+    walkDistance: 'Walking Distance',
+    selectTeraToView: 'Select Taxi Station:',
+    boardHereFor: 'Board here for:',
+    stationAreaFootprint: 'Taxi Ranking Zone'
   },
   am: {
     appTitle: 'አዲስ ትራንዚትና ታክሲ ማዕከል',
@@ -211,7 +240,34 @@ const I18N = {
     streetsHd: '🧭 ጎዳናዎች HD',
     satelliteHybrid: '🛰️ ሳተላይት',
     osmStandard: '🗺️ ኦፕን ስትሪት',
-    darkHd: '🌙 የሌሊት HD'
+    darkHd: '🌙 የሌሊት HD',
+    beginningPlaceholder: 'የመነሻ ተራ ይጻፉ (ለምሳሌ ሜክሲኮ፣ ፒያሳ፣ ቦሌ፣ ሳሪስ)...',
+    endingPlaceholder: 'የመድረሻ ቦታ ይጻፉ (ለምሳሌ መገናኛ፣ መርካቶ፣ አያት)...',
+    clearFilters: 'ሁሉንም አጥፋ',
+    swapBegEnd: 'መነሻና መድረሻ ቀይር ⇄',
+    filterByBegEnd: 'በመነሻና በመድረሻ አጣራ',
+    popularDests: 'ተወዳጅ መዳረሻዎች፡',
+    submitShowOnMap: 'መስመሩን በካርታ ላይ አሳይ 🚀',
+    noMatchingRouteFound: 'ትክክለኛ ጣቢያ አልተገኘም። አማራጭ የቀጥታ መስመር በካርታ ላይ ታይቷል።',
+    tabPlaceMap: 'የቦታ ካርታና መመሪያ 🗺️',
+    placeMapSubtitle: 'ግልጽ ካርታ፣ መለያ ቦታዎች እና ደረጃ በደረጃ ወደ ታክሲ ተራ የእግር ጉዞ መመሪያ',
+    howToGetHere: 'ወደዚህ ተራ እንዴት መድረስ ይቻላል? 🚶',
+    stationPlaceGuide: 'የተራው መገኛ እና የእግር መንገድ መመሪያ',
+    startFrom: 'የእግር መነሻ ቦታ ይምረጡ፡',
+    myLocation: 'የአሁኑ መገኛዬ (ጂፒኤስ) 📍',
+    popularLandmarks: 'የአዲስ አበባ ታዋቂ ቦታ ወይም ጣቢያ 🏛️',
+    clickMapToSetOrigin: 'ወይም መነሻ ለመምረጥ ካርታው ላይ ጠቅ ያድርጉ 🖱️',
+    nearbyLandmarks: 'በዚህ ጣቢያ ዙሪያ የሚገኙ ዋና መለያዎች፡',
+    walkingSteps: 'ደረጃ በደረጃ የእግር ጉዞ መመሪያ፡',
+    queueLanes: 'የታክሲ ሰልፍ መያዣና መሳፈሪያ ቦታዎች፡',
+    openInGoogleMapsWalk: 'በጎግል ካርታ የቀጥታ የእግር መንገድ ክፈት 🗺️',
+    zoomStationHd: 'ጣቢያውን በቅርብ አሳይ (HD) 🔍',
+    fitWalkingRoute: 'ሙሉ የእግር መስመር አሳይ 🚶',
+    estWalkTime: 'የእግር ጉዞ ጊዜ',
+    walkDistance: 'የእግር ርቀት',
+    selectTeraToView: 'የሚፈልጉትን ታክሲ ተራ ይምረጡ፡',
+    boardHereFor: 'የሚሳፈሩባቸው መዳረሻዎች፡',
+    stationAreaFootprint: 'የታክሲ ተራ ማቆሚያ ክልል'
   },
   ti: {
     appTitle: 'ኣዲስ ትራንዚትን ታክሲን',
@@ -314,7 +370,34 @@ const I18N = {
     streetsHd: '🧭 ጎደናታት HD',
     satelliteHybrid: '🛰️ ሳተላይት',
     osmStandard: '🗺️ ኦፕን ስትሪት',
-    darkHd: '🌙 ጸሊም HD'
+    darkHd: '🌙 ጸሊም HD',
+    beginningPlaceholder: 'መበገሲ ተራ ጽሓፍ (ንኣብነት መክሲኮ፣ ፒያሳ፣ ቦሌ)...',
+    endingPlaceholder: 'መዕረፊ ቦታ ጽሓፍ (ንኣብነት መገናኛ፣ መርካቶ፣ ኣያት)...',
+    clearFilters: 'ኩሉ ኣጽሪ',
+    swapBegEnd: 'መበገሲን መዕረፊን ቀይር ⇄',
+    filterByBegEnd: 'ብመበገሲን ብመዕረፊን ኣጻሪ',
+    popularDests: 'ፍሉጣት መዕረፍታት፡',
+    submitShowOnMap: 'ነቲ መስመር ኣብ ካርታ ኣርኢ 🚀',
+    noMatchingRouteFound: 'ትኽክለኛ መዕረፊ ኣይተረኽበን። ኣማራጺ መስመር ኣብ ካርታ ተራእዩ ኣሎ።',
+    tabPlaceMap: 'ናይ ቦታ ካርታን መምርሕን 🗺️',
+    placeMapSubtitle: 'ግሉጽ ካርታ፣ መለለዪ ቦታታትን ናይ እግሪ መንገዲ መምርሕን',
+    howToGetHere: 'ናብዚ ተራ ብኸመይ ትበጽሕ? 🚶',
+    stationPlaceGuide: 'ናይ ተራ ቦታን ናይ እግሪ ጉዕዞ መምርሕን',
+    startFrom: 'ናይ እግሪ መበገሲ ምረጽ፡',
+    myLocation: 'ናተይ ሕጂ ቦታ (GPS) 📍',
+    popularLandmarks: 'ፍሉጥ ቦታ ወይ መዕረፊ ምረጽ 🏛️',
+    clickMapToSetOrigin: 'ወይ መበገሲ ንምምራጽ ኣብ ካርታ ጠውቕ 🖱️',
+    nearbyLandmarks: 'ኣብዚ ጣብያ ዙርያ ዝርከቡ ፍሉጣት መለለዪታት፡',
+    walkingSteps: 'ብደረጃ ናይ እግሪ ጉዕዞ መምርሒ፡',
+    queueLanes: 'ተሰሪዕካ እትሳፈረሎም ቦታታት፡',
+    openInGoogleMapsWalk: 'ብጎጉል ካርታ ናይ እግሪ መንገዲ ኽፈት 🗺️',
+    zoomStationHd: 'ነቲ ጣብያ ብቐረባ ኣርኢ (HD) 🔍',
+    fitWalkingRoute: 'ምሉእ ናይ እግሪ ጉዕዞ ኣርኢ 🚶',
+    estWalkTime: 'ዝወስዶ ናይ እግሪ ግዜ',
+    walkDistance: 'ናይ እግሪ ርሕቐት',
+    selectTeraToView: 'እትደልዮ ተራ ታክሲ ምረጽ፡',
+    boardHereFor: 'እትሳፈረሎም መዕረፍታት፡',
+    stationAreaFootprint: 'ናይ ታክሲ ተራ መዕረፊ ክልል'
   }
 };
 
@@ -449,6 +532,71 @@ function createCustomIcon(category, isSelected = false, isOrigin = false, isDest
   });
 }
 
+// Landmark Icon Generator for Physical Place Navigation
+function createLandmarkIcon(emoji = '📍') {
+  return L.divIcon({
+    className: 'landmark-pin-badge',
+    html: `<div style="font-size: 15px; line-height: 1;">${emoji}</div>`,
+    iconSize: [28, 28],
+    iconAnchor: [14, 14],
+    popupAnchor: [0, -16]
+  });
+}
+
+// Walking Start Origin Icon Generator
+function createWalkingOriginIcon() {
+  return L.divIcon({
+    className: 'walking-origin-badge',
+    html: `<div style="font-size: 16px; line-height: 1;">🚶</div>`,
+    iconSize: [32, 32],
+    iconAnchor: [16, 16],
+    popupAnchor: [0, -18]
+  });
+}
+
+// Station Radar Pulsing Icon Generator for Crystal Clear Taxi Rank Visibility
+function createStationRadarIcon() {
+  const size = 38;
+  return L.divIcon({
+    className: 'station-radar-pulse custom-transit-pin-selected',
+    html: `
+      <div style="
+        width: ${size}px;
+        height: ${size}px;
+        background: #eab308;
+        border-radius: 50% 50% 50% 0;
+        transform: rotate(-45deg);
+        border: 2.5px solid #ffffff;
+        box-shadow: 0 4px 16px rgba(234, 179, 8, 0.6), 0 0 20px #eab308aa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+      ">
+        <div style="transform: rotate(45deg); display: flex; align-items: center; justify-content: center; font-size: 18px;">
+          🚕
+        </div>
+      </div>
+    `,
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size],
+    popupAnchor: [0, -size]
+  });
+}
+
+// Map Click Handler for Interactive Starting Origin Selection
+function MapClickHandler({ onMapClick, enabled }) {
+  useMapEvents({
+    click(e) {
+      if (enabled && onMapClick) {
+        onMapClick(e.latlng);
+      }
+    }
+  });
+  return null;
+}
+
+
 function MapController({ center, zoom, bounds, clearSignal, isSidebarOpen }) {
   const map = useMap();
 
@@ -530,8 +678,51 @@ export default function App() {
 
   const [stops, setStops] = useState([]);
   const [routes, setRoutes] = useState([]);
-  const [stats, setStats] = useState(null);
-  const [taxiTeras, setTaxiTeras] = useState([]);
+  const [taxiTeras, setTaxiTeras] = useState(COMPLETE_TAXI_TERAS);
+  const [selectedPlaceTera, setSelectedPlaceTera] = useState(COMPLETE_TAXI_TERAS[0]);
+  const [placeWalkingOrigin, setPlaceWalkingOrigin] = useState(ADDIS_STARTING_LANDMARKS[0]);
+  const [isPickingMapOrigin, setIsPickingMapOrigin] = useState(false);
+  const [showPlaceGuideOverlay, setShowPlaceGuideOverlay] = useState(true);
+
+  // Station Place Map Walking Calculations
+  const placeWalkingDistKm = useMemo(() => {
+    if (!selectedPlaceTera || !placeWalkingOrigin) return null;
+    return calculateDistanceKm(
+      Number(placeWalkingOrigin.lat),
+      Number(placeWalkingOrigin.lng),
+      Number(selectedPlaceTera.latitude),
+      Number(selectedPlaceTera.longitude)
+    );
+  }, [selectedPlaceTera, placeWalkingOrigin]);
+
+  const placeWalkingMins = useMemo(() => {
+    if (!placeWalkingDistKm) return null;
+    return Math.max(1, Math.round((placeWalkingDistKm / 4.5) * 60));
+  }, [placeWalkingDistKm]);
+
+  const placeWalkingSteps = useMemo(() => {
+    if (!placeWalkingDistKm) return null;
+    return Math.round(placeWalkingDistKm * 1350);
+  }, [placeWalkingDistKm]);
+
+  const handleOpenPlaceMap = (tera) => {
+    const fullTera = COMPLETE_TAXI_TERAS.find(t => t.id === tera.id) || tera;
+    setSelectedPlaceTera(fullTera);
+    setActiveTab('placemap');
+    setShowPlaceGuideOverlay(true);
+    setMapCenter([Number(fullTera.latitude), Number(fullTera.longitude)]);
+    setMapZoom(16);
+    if (placeWalkingOrigin) {
+      setRouteBounds([
+        [Number(placeWalkingOrigin.lat), Number(placeWalkingOrigin.lng)],
+        [Number(fullTera.latitude), Number(fullTera.longitude)]
+      ]);
+    }
+    if (window.innerWidth < 768) {
+      setIsSidebarOpen(false);
+    }
+  };
+
   const [taxiServices, setTaxiServices] = useState([]);
   const [regionalTerminals, setRegionalTerminals] = useState([]);
   const [feederBajaj, setFeederBajaj] = useState([]);
@@ -571,9 +762,11 @@ export default function App() {
 
   // Beginning ➔ End Taxi Line Selection & Filtering
   const [selectedTaxiLine, setSelectedTaxiLine] = useState(null);
-  const [taxiLineQuery, setTaxiLineQuery] = useState('');
+  const [beginningQuery, setBeginningQuery] = useState('');
+  const [endingQuery, setEndingQuery] = useState('');
   const [originFilter, setOriginFilter] = useState('all');
   const [fareFilter, setFareFilter] = useState('all');
+  const [filterMessage, setFilterMessage] = useState('');
 
   // Addis Ababa Full Metropolitan Extent: Center [9.0150, 38.7700], Zoom 12
   const [mapCenter, setMapCenter] = useState([9.0150, 38.7700]);
@@ -774,23 +967,95 @@ export default function App() {
       if (fareFilter === 'under10' && line.fare_etb > 10) return false;
       if (fareFilter === '10to15' && (line.fare_etb < 10 || line.fare_etb > 15)) return false;
       if (fareFilter === 'over15' && line.fare_etb <= 15) return false;
-      if (taxiLineQuery.trim()) {
-        const q = taxiLineQuery.toLowerCase().trim();
+
+      // Beginning (Origin) text filter
+      if (beginningQuery.trim()) {
+        const bq = beginningQuery.toLowerCase().trim();
         const matchesOrigin =
-          line.origin_en.toLowerCase().includes(q) ||
-          (line.origin_am && line.origin_am.includes(q)) ||
-          (line.origin_ti && line.origin_ti.includes(q));
-        const matchesDest =
-          line.dest_en.toLowerCase().includes(q) ||
-          (line.dest_am && line.dest_am.includes(q)) ||
-          (line.dest_ti && line.dest_ti.includes(q));
-        const matchesSubcity = line.origin_subcity.toLowerCase().includes(q);
-        const matchesKeywords = line.keywords.some(k => k.toLowerCase().includes(q));
-        if (!matchesOrigin && !matchesDest && !matchesSubcity && !matchesKeywords) return false;
+          line.origin_en.toLowerCase().includes(bq) ||
+          (line.origin_am && line.origin_am.includes(bq)) ||
+          (line.origin_ti && line.origin_ti.includes(bq)) ||
+          line.origin_subcity.toLowerCase().includes(bq) ||
+          (line.origin_location_en && line.origin_location_en.toLowerCase().includes(bq)) ||
+          (line.origin_location_am && line.origin_location_am.includes(bq));
+        if (!matchesOrigin) return false;
       }
+
+      // End (Destination) text filter
+      if (endingQuery.trim()) {
+        const eq = endingQuery.toLowerCase().trim();
+        const matchesDest =
+          line.dest_en.toLowerCase().includes(eq) ||
+          (line.dest_am && line.dest_am.includes(eq)) ||
+          (line.dest_ti && line.dest_ti.includes(eq)) ||
+          line.keywords.some(k => k.toLowerCase().includes(eq));
+        if (!matchesDest) return false;
+      }
+
       return true;
     });
-  }, [allTaxiLines, originFilter, fareFilter, taxiLineQuery]);
+  }, [allTaxiLines, originFilter, fareFilter, beginningQuery, endingQuery]);
+
+  const handleSwapTaxiInputs = () => {
+    const tempBeg = beginningQuery;
+    const tempEnd = endingQuery;
+    setBeginningQuery(tempEnd);
+    setEndingQuery(tempBeg);
+  };
+
+  const handleClearTaxiFilters = () => {
+    setBeginningQuery('');
+    setEndingQuery('');
+    setOriginFilter('all');
+    setFareFilter('all');
+    setFilterMessage('');
+  };
+
+  const resolveLocationCoord = (query) => {
+    if (!query || !query.trim()) return null;
+    const q = query.toLowerCase().trim();
+
+    // 1. Direct match in DEST_COORDS dictionary
+    for (const [key, coord] of Object.entries(DEST_COORDS)) {
+      if (q.includes(key) || key.includes(q)) {
+        const capKey = key.charAt(0).toUpperCase() + key.slice(1);
+        return { name: capKey, coord };
+      }
+    }
+
+    // 2. Taxi Teras match
+    const matchedTera = taxiTeras.find(tera =>
+      tera.name_en.toLowerCase().includes(q) ||
+      (tera.name_am && tera.name_am.includes(q)) ||
+      (tera.name_ti && tera.name_ti.includes(q)) ||
+      tera.subcity.toLowerCase().includes(q) ||
+      (tera.exact_location_en && tera.exact_location_en.toLowerCase().includes(q))
+    );
+    if (matchedTera) {
+      return {
+        name: matchedTera.name_en.replace(' Taxi Tera', '').replace(' Taxi Stand', ''),
+        name_am: matchedTera.name_am ? matchedTera.name_am.replace(' ታክሲ ተራ', '').replace(' ታክሲ ማቆሚያ', '') : null,
+        coord: [Number(matchedTera.latitude), Number(matchedTera.longitude)],
+        tera: matchedTera
+      };
+    }
+
+    // 3. Transit Stops match (LRT & Bus stops)
+    const matchedStop = stops.find(s =>
+      s.name_en.toLowerCase().includes(q) ||
+      (s.name_am && s.name_am.includes(q)) ||
+      (s.name_ti && s.name_ti.includes(q))
+    );
+    if (matchedStop) {
+      return {
+        name: matchedStop.name_en,
+        name_am: matchedStop.name_am,
+        coord: [Number(matchedStop.latitude), Number(matchedStop.longitude)]
+      };
+    }
+
+    return null;
+  };
 
   const handleSelectTaxiLine = (line) => {
     setSelectedTaxiLine(line);
@@ -808,6 +1073,124 @@ export default function App() {
     }
   };
 
+  const handleSubmitBegEndFilter = (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+
+    // Ensure map layers are turned on so user immediately sees the visual route
+    setShowTaxiLayer(true);
+    setShowRouteLines(true);
+    setFilterMessage('');
+
+    // Case 1: Direct matches found in filteredTaxiLines
+    if (filteredTaxiLines.length > 0) {
+      let bestLine = filteredTaxiLines[0];
+      if (userLocation) {
+        const sorted = [...filteredTaxiLines].sort((a, b) => (a.distFromUser || 999) - (b.distFromUser || 999));
+        bestLine = sorted[0];
+      }
+      handleSelectTaxiLine(bestLine);
+      if (window.innerWidth < 768) {
+        setIsSidebarOpen(false);
+      }
+      return;
+    }
+
+    const bq = beginningQuery.trim();
+    const eq = endingQuery.trim();
+
+    // Case 2: User provided beginning and/or ending queries, but no direct minibus line exists
+    if (bq || eq) {
+      const bqLower = bq.toLowerCase();
+      const eqLower = eq.toLowerCase();
+
+      // Check if this corridor corresponds to a Light Rail (LRT) or Bus route
+      const matchedTransitRoute = routes.find(r => {
+        const routeText = (r.route_code + ' ' + r.name_en + ' ' + (r.name_am || '') + ' ' + (r.name_ti || '')).toLowerCase();
+        const stopsText = (r.stops || []).map(s => (s.name_en + ' ' + (s.name_am || '')).toLowerCase()).join(' ');
+        const bOk = !bqLower || routeText.includes(bqLower) || stopsText.includes(bqLower);
+        const eOk = !eqLower || routeText.includes(eqLower) || stopsText.includes(eqLower);
+        return bOk && eOk;
+      });
+
+      if (matchedTransitRoute) {
+        setSelectedRoute(matchedTransitRoute);
+        setSelectedTaxiLine(null);
+        setJourneyPlan(null);
+        setWalkingDestination(null);
+        if (matchedTransitRoute.stops && matchedTransitRoute.stops.length > 1) {
+          const coords = matchedTransitRoute.stops.map(s => [Number(s.latitude), Number(s.longitude)]);
+          setRouteBounds(coords);
+        }
+        if (window.innerWidth < 768) {
+          setIsSidebarOpen(false);
+        }
+        return;
+      }
+
+      // Check if we can resolve coordinates for beginning & ending locations
+      const begLoc = resolveLocationCoord(bq);
+      const endLoc = resolveLocationCoord(eq);
+
+      if (begLoc && endLoc) {
+        const distance = calculateDistanceKm(begLoc.coord[0], begLoc.coord[1], endLoc.coord[0], endLoc.coord[1]);
+        const estFare = Math.max(10, Math.round(distance * 2.8));
+        const estDuration = Math.max(8, Math.round(distance * 3.2));
+
+        const customLine = {
+          id: `custom-filter-${Date.now()}`,
+          tera: begLoc.tera || null,
+          origin_en: begLoc.name,
+          origin_am: begLoc.name_am || begLoc.name,
+          origin_ti: begLoc.name,
+          origin_subcity: 'Addis Ababa',
+          origin_location_en: `${begLoc.name} Hub / Stand`,
+          origin_location_am: `${begLoc.name_am || begLoc.name} ማቆሚያ`,
+          origin_lat: begLoc.coord[0],
+          origin_lng: begLoc.coord[1],
+          dest_en: endLoc.name,
+          dest_am: endLoc.name_am || endLoc.name,
+          dest_ti: endLoc.name,
+          destCoord: endLoc.coord,
+          fare_etb: estFare,
+          duration_mins: estDuration,
+          keywords: [begLoc.name.toLowerCase(), endLoc.name.toLowerCase()],
+          weyala_shout: `${endLoc.name_am || endLoc.name}! ${endLoc.name_am || endLoc.name}! ሙሉ! ሙሉ!`
+        };
+
+        handleSelectTaxiLine(customLine);
+        if (window.innerWidth < 768) {
+          setIsSidebarOpen(false);
+        }
+        return;
+      }
+
+      if (begLoc) {
+        setMapCenter(begLoc.coord);
+        setMapZoom(15);
+        if (window.innerWidth < 768) {
+          setIsSidebarOpen(false);
+        }
+        return;
+      }
+
+      if (endLoc) {
+        setMapCenter(endLoc.coord);
+        setMapZoom(15);
+        if (window.innerWidth < 768) {
+          setIsSidebarOpen(false);
+        }
+        return;
+      }
+
+      // Unable to resolve either
+      setFilterMessage(t.noMatchingRouteFound || 'Could not find matching stations. Try searching major hubs like Mexico, Bole, Megenagna, Piazza, Ayat.');
+      return;
+    }
+
+    // Case 3: Empty inputs, fit full Addis Ababa view
+    handleFitAddisCity();
+  };
+
   const areAllLayersOff = !showTaxiLayer && !showLrtLayer && !showBusLayer && !showRegionalLayer && !showRouteLines && !showStationLabels;
 
   const handleClearMap = () => {
@@ -817,6 +1200,9 @@ export default function App() {
     setJourneyPlan(null);
     setOriginId('');
     setDestId('');
+    setBeginningQuery('');
+    setEndingQuery('');
+    setFilterMessage('');
     setRouteBounds(null);
     setShowRouteLines(true);
     setClearSignal(prev => prev + 1);
@@ -878,6 +1264,14 @@ export default function App() {
         (pos) => {
           const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
           setUserLocation(loc);
+          setPlaceWalkingOrigin({
+            id: 'gps',
+            name_en: 'My Current Location (GPS)',
+            name_am: 'የአሁኑ መገኛዬ (ጂፒኤስ)',
+            name_ti: 'ናተይ ሕጂ ቦታ (GPS)',
+            lat: loc.lat,
+            lng: loc.lng
+          });
           setMapCenter([loc.lat, loc.lng]);
           setMapZoom(15);
           setLocatingUser(false);
@@ -886,6 +1280,14 @@ export default function App() {
           // Default to Meskel Square if permission denied or desktop
           const fallbackLoc = { lat: 9.0102, lng: 38.7628 };
           setUserLocation(fallbackLoc);
+          setPlaceWalkingOrigin({
+            id: 'gps',
+            name_en: 'Addis City Center (Meskel Square)',
+            name_am: 'የአዲስ አበባ መሃል ከተማ (መስቀል አደባባይ)',
+            name_ti: 'ማእከል ኣዲስ ኣበባ (መስቀል ኣደባባይ)',
+            lat: fallbackLoc.lat,
+            lng: fallbackLoc.lng
+          });
           setMapCenter([fallbackLoc.lat, fallbackLoc.lng]);
           setMapZoom(15);
           setLocatingUser(false);
@@ -894,11 +1296,20 @@ export default function App() {
     } else {
       const fallbackLoc = { lat: 9.0102, lng: 38.7628 };
       setUserLocation(fallbackLoc);
+      setPlaceWalkingOrigin({
+        id: 'gps',
+        name_en: 'Addis City Center (Meskel Square)',
+        name_am: 'የአዲስ አበባ መሃል ከተማ (መስቀል አደባባይ)',
+        name_ti: 'ማእከል ኣዲስ ኣበባ (መስቀል ኣደባባይ)',
+        lat: fallbackLoc.lat,
+        lng: fallbackLoc.lng
+      });
       setMapCenter([fallbackLoc.lat, fallbackLoc.lng]);
       setMapZoom(15);
       setLocatingUser(false);
     }
   };
+
 
   const handleFindRoute = () => {
     if (!originId || !destId) return;
@@ -1066,6 +1477,7 @@ export default function App() {
         }}>
           {[
             { id: 'alltaxilines', label: t.tabAllTaxiLines, icon: '🚏' },
+            { id: 'placemap', label: t.tabPlaceMap, icon: '🗺️' },
             { id: 'taxifinder', label: t.tabTaxiFinder, icon: '🔍' },
             { id: 'taxiteras', label: t.tabTaxiTeras, icon: '🚕' },
             { id: 'farecalc', label: t.tabFareCalc, icon: '💰' },
@@ -1132,65 +1544,290 @@ export default function App() {
                     : 'Every direct minibus taxi line in Addis Ababa with origin station, arrival destination, official tariff, and conductor shouts.'}
                 </p>
 
-                {/* Instant Search Bar */}
-                <input
-                  type="text"
-                  placeholder={t.searchOriginOrDest}
-                  value={taxiLineQuery}
-                  onChange={e => setTaxiLineQuery(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    borderRadius: '9px',
-                    border: '1.5px solid #eab308',
-                    background: '#ffffff',
-                    fontSize: '12.5px',
-                    color: '#0f172a',
-                    fontWeight: '600',
-                    outline: 'none',
-                    marginBottom: '10px'
-                  }}
-                />
+                {/* Dual Beginning and End Input Filter Box */}
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px',
+                  background: '#ffffff',
+                  padding: '12px',
+                  borderRadius: '12px',
+                  border: '1.5px solid #facc15',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                  marginBottom: '10px'
+                }}>
+                  {/* Beginning (Origin) Input */}
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                      <label style={{ fontSize: '11px', fontWeight: '700', color: '#166534', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span>🟢</span>
+                        <span>{t.beginning} (Origin)</span>
+                      </label>
+                      {beginningQuery && (
+                        <button
+                          onClick={() => setBeginningQuery('')}
+                          style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '11px', cursor: 'pointer', padding: 0 }}
+                        >
+                          ✕ Clear
+                        </button>
+                      )}
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', background: '#f0fdf4', border: '1.5px solid #86efac', borderRadius: '8px', padding: '0 10px' }}>
+                      <span style={{ fontSize: '13px', marginRight: '6px' }}>🟢</span>
+                      <input
+                        type="text"
+                        placeholder={t.beginningPlaceholder}
+                        value={beginningQuery}
+                        onChange={e => { setBeginningQuery(e.target.value); setFilterMessage(''); }}
+                        onKeyDown={e => { if (e.key === 'Enter') handleSubmitBegEndFilter(e); }}
+                        style={{
+                          width: '100%',
+                          padding: '9px 0',
+                          border: 'none',
+                          background: 'transparent',
+                          fontSize: '12.5px',
+                          color: '#0f172a',
+                          fontWeight: '600',
+                          outline: 'none'
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Swap & Quick Action Controls in Center */}
+                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', margin: '-4px 0' }}>
+                    <button
+                      onClick={handleSwapTaxiInputs}
+                      title={t.swapBegEnd}
+                      style={{
+                        background: '#ffffff',
+                        border: '1.5px solid #eab308',
+                        borderRadius: '50%',
+                        width: '28px',
+                        height: '28px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '13px',
+                        fontWeight: '800',
+                        color: '#854d0e',
+                        cursor: 'pointer',
+                        boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
+                      }}
+                    >
+                      ⇅
+                    </button>
+                  </div>
+
+                  {/* End (Destination) Input */}
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                      <label style={{ fontSize: '11px', fontWeight: '700', color: '#991b1b', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span>🔴</span>
+                        <span>{t.ending} (Destination)</span>
+                      </label>
+                      {endingQuery && (
+                        <button
+                          onClick={() => { setEndingQuery(''); setFilterMessage(''); }}
+                          style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '11px', cursor: 'pointer', padding: 0 }}
+                        >
+                          ✕ Clear
+                        </button>
+                      )}
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', background: '#fef2f2', border: '1.5px solid #fca5a5', borderRadius: '8px', padding: '0 10px' }}>
+                      <span style={{ fontSize: '13px', marginRight: '6px' }}>🔴</span>
+                      <input
+                        type="text"
+                        placeholder={t.endingPlaceholder}
+                        value={endingQuery}
+                        onChange={e => { setEndingQuery(e.target.value); setFilterMessage(''); }}
+                        onKeyDown={e => { if (e.key === 'Enter') handleSubmitBegEndFilter(e); }}
+                        style={{
+                          width: '100%',
+                          padding: '9px 0',
+                          border: 'none',
+                          background: 'transparent',
+                          fontSize: '12.5px',
+                          color: '#0f172a',
+                          fontWeight: '600',
+                          outline: 'none'
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Submit Button to Display Filtered Route on Map */}
+                  <button
+                    onClick={handleSubmitBegEndFilter}
+                    style={{
+                      width: '100%',
+                      padding: '11px 16px',
+                      borderRadius: '10px',
+                      border: 'none',
+                      background: 'linear-gradient(135deg, #15803d 0%, #166534 100%)',
+                      color: '#ffffff',
+                      fontWeight: '800',
+                      fontSize: '13px',
+                      cursor: 'pointer',
+                      boxShadow: '0 4px 14px rgba(22, 163, 74, 0.35)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      marginTop: '4px',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    <span style={{ fontSize: '15px' }}>🚀</span>
+                    <span>{t.submitShowOnMap}</span>
+                    {(beginningQuery.trim() || endingQuery.trim()) && (
+                      <span style={{
+                        background: 'rgba(255,255,255,0.22)',
+                        padding: '2px 8px',
+                        borderRadius: '10px',
+                        fontSize: '11px',
+                        fontWeight: '800',
+                        marginLeft: '4px'
+                      }}>
+                        {filteredTaxiLines.length > 0 ? `${filteredTaxiLines.length} found` : 'Show'}
+                      </span>
+                    )}
+                  </button>
+
+                  {/* Feedback Message if any */}
+                  {filterMessage && (
+                    <div style={{
+                      background: '#fef2f2',
+                      border: '1px solid #fecaca',
+                      borderRadius: '8px',
+                      padding: '8px 10px',
+                      fontSize: '11.5px',
+                      color: '#991b1b',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}>
+                      <span>⚠️</span>
+                      <span>{filterMessage}</span>
+                    </div>
+                  )}
+
+                  {/* Clear All Filters Button */}
+                  {(beginningQuery || endingQuery || originFilter !== 'all' || fareFilter !== 'all') && (
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '2px' }}>
+                      <button
+                        onClick={handleClearTaxiFilters}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#dc2626',
+                          fontSize: '11px',
+                          fontWeight: '700',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}
+                      >
+                        <span>🧹</span>
+                        <span>{t.clearFilters}</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Popular End Destination Quick Chips */}
+                <div style={{ marginBottom: '10px' }}>
+                  <div style={{ fontSize: '10.5px', fontWeight: '700', color: '#713f12', marginBottom: '4px' }}>
+                    🔴 {t.popularDests}:
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                    {[
+                      { en: 'Bole', am: 'ቦሌ' },
+                      { en: 'Piazza', am: 'ፒያሳ' },
+                      { en: 'Mexico', am: 'ሜክሲኮ' },
+                      { en: 'Megenagna', am: 'መገናኛ' },
+                      { en: 'Mercato', am: 'መርካቶ' },
+                      { en: 'Saris', am: 'ሳሪስ' },
+                      { en: 'Ayat', am: 'አያት' },
+                      { en: 'Kality', am: 'ቃሊቲ' },
+                      { en: 'Jomo', am: 'ጆሞ' },
+                      { en: 'Kera', am: 'ቄራ' }
+                    ].map(dest => {
+                      const isSelected = endingQuery.toLowerCase() === dest.en.toLowerCase() || (lang === 'am' && endingQuery.includes(dest.am));
+                      return (
+                        <button
+                          key={dest.en}
+                          onClick={() => setEndingQuery(isSelected ? '' : (lang === 'am' ? dest.am : dest.en))}
+                          style={{
+                            padding: '3px 8px',
+                            background: isSelected ? '#dc2626' : '#ffffff',
+                            color: isSelected ? '#ffffff' : '#991b1b',
+                            border: `1px solid ${isSelected ? '#dc2626' : '#fca5a5'}`,
+                            borderRadius: '6px',
+                            fontSize: '10.5px',
+                            fontWeight: isSelected ? '800' : '600',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          {lang === 'am' ? dest.am : dest.en}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
 
                 {/* Origin Hub Quick Filter Pills */}
                 <div style={{ marginBottom: '8px' }}>
                   <div style={{ fontSize: '10.5px', fontWeight: '700', color: '#713f12', marginBottom: '4px' }}>
-                    🟢 {t.beginning}:
+                    🟢 {t.beginning} Hubs:
                   </div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', maxHeight: '82px', overflowY: 'auto' }}>
                     <button
-                      onClick={() => setOriginFilter('all')}
+                      onClick={() => { setOriginFilter('all'); setBeginningQuery(''); }}
                       style={{
                         padding: '3px 8px',
-                        background: originFilter === 'all' ? '#713f12' : '#ffffff',
-                        color: originFilter === 'all' ? '#ffffff' : '#713f12',
+                        background: originFilter === 'all' && !beginningQuery ? '#713f12' : '#ffffff',
+                        color: originFilter === 'all' && !beginningQuery ? '#ffffff' : '#713f12',
                         border: '1px solid #facc15',
                         borderRadius: '6px',
                         fontSize: '10.5px',
-                        fontWeight: originFilter === 'all' ? '800' : '500',
+                        fontWeight: originFilter === 'all' && !beginningQuery ? '800' : '500',
                         cursor: 'pointer'
                       }}
                     >
                       All Teras ({allTaxiLines.length})
                     </button>
-                    {taxiTeras.map(tera => (
-                      <button
-                        key={tera.id}
-                        onClick={() => setOriginFilter(tera.id)}
-                        style={{
-                          padding: '3px 8px',
-                          background: originFilter === tera.id ? '#713f12' : '#ffffff',
-                          color: originFilter === tera.id ? '#ffffff' : '#713f12',
-                          border: '1px solid #facc15',
-                          borderRadius: '6px',
-                          fontSize: '10.5px',
-                          fontWeight: originFilter === tera.id ? '800' : '500',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        {lang === 'am' ? tera.name_am.replace(' ታክሲ ተራ', '').replace(' ታክሲ ማቆሚያ', '') : tera.name_en.replace(' Taxi Tera', '').replace(' Taxi Stand', '')}
-                      </button>
-                    ))}
+                    {taxiTeras.map(tera => {
+                      const isSelected = originFilter === tera.id || beginningQuery.toLowerCase().includes(tera.name_en.toLowerCase().replace(' taxi tera', '').replace(' taxi stand', ''));
+                      return (
+                        <button
+                          key={tera.id}
+                          onClick={() => {
+                            if (originFilter === tera.id) {
+                              setOriginFilter('all');
+                              setBeginningQuery('');
+                            } else {
+                              setOriginFilter(tera.id);
+                              setBeginningQuery(lang === 'am' ? tera.name_am.replace(' ታክሲ ተራ', '').replace(' ታክሲ ማቆሚያ', '') : tera.name_en.replace(' Taxi Tera', '').replace(' Taxi Stand', ''));
+                            }
+                          }}
+                          style={{
+                            padding: '3px 8px',
+                            background: isSelected ? '#15803d' : '#ffffff',
+                            color: isSelected ? '#ffffff' : '#166534',
+                            border: `1px solid ${isSelected ? '#15803d' : '#86efac'}`,
+                            borderRadius: '6px',
+                            fontSize: '10.5px',
+                            fontWeight: isSelected ? '800' : '500',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          {lang === 'am' ? tera.name_am.replace(' ታክሲ ተራ', '').replace(' ታክሲ ማቆሚያ', '') : tera.name_en.replace(' Taxi Tera', '').replace(' Taxi Stand', '')}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -1225,8 +1862,28 @@ export default function App() {
 
               {/* List of Beginning ➔ End Routes */}
               {filteredTaxiLines.length === 0 ? (
-                <div style={{ background: '#f8fafc', padding: '20px', borderRadius: '12px', textAlign: 'center', color: '#64748b', fontSize: '12px' }}>
-                  No taxi routes matched your filter. Try clearing the search or choosing "All Teras".
+                <div style={{ background: '#f8fafc', padding: '20px', borderRadius: '12px', textAlign: 'center', color: '#64748b', fontSize: '12px', border: '1px dashed #cbd5e1' }}>
+                  <div style={{ marginBottom: (beginningQuery || endingQuery) ? '10px' : '0' }}>
+                    {lang === 'am' ? 'ለተፈለገው መስመር ቀጥተኛ ሚኒባስ ታክሲ አልተገኘም።' : 'No direct minibus taxi lines matched your exact filter.'}
+                  </div>
+                  {(beginningQuery || endingQuery) && (
+                    <button
+                      onClick={handleSubmitBegEndFilter}
+                      style={{
+                        padding: '8px 14px',
+                        background: 'linear-gradient(135deg, #15803d 0%, #166534 100%)',
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontSize: '12px',
+                        fontWeight: '700',
+                        cursor: 'pointer',
+                        boxShadow: '0 2px 8px rgba(22, 163, 74, 0.25)'
+                      }}
+                    >
+                      🚀 {t.submitShowOnMap}
+                    </button>
+                  )}
                 </div>
               ) : (
                 filteredTaxiLines.map(line => {
@@ -1325,6 +1982,28 @@ export default function App() {
                           <span>{isLineSelected ? 'Showing on Map' : t.viewOnMap}</span>
                         </button>
                         <button
+                          onClick={() => handleOpenPlaceMap(line.tera)}
+                          style={{
+                            flex: 1,
+                            padding: '7px',
+                            background: '#eff6ff',
+                            border: '1.5px solid #60a5fa',
+                            color: '#1d4ed8',
+                            borderRadius: '7px',
+                            fontSize: '11px',
+                            fontWeight: '800',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '4px'
+                          }}
+                          title="Open clear station place map, landmarks & walking guide"
+                        >
+                          <span>📍</span>
+                          <span>{t.tabPlaceMap}</span>
+                        </button>
+                        <button
                           onClick={() => {
                             setWalkingDestination(line.tera);
                             if (!userLocation) handleLocateMe();
@@ -1358,6 +2037,401 @@ export default function App() {
                     </div>
                   );
                 })
+              )}
+            </div>
+          )}
+
+          {/* ==================== TAB: STATION PLACE MAP & WALKING GUIDE ==================== */}
+          {activeTab === 'placemap' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              {/* Header Banner */}
+              <div style={{
+                background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
+                border: '1.5px solid #93c5fd',
+                borderRadius: '14px',
+                padding: '16px'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div>
+                    <h3 style={{ margin: '0 0 4px', fontSize: '15px', fontWeight: '800', color: '#1e3a8a' }}>
+                      🗺️ {t.tabPlaceMap}
+                    </h3>
+                    <p style={{ margin: 0, fontSize: '11.5px', color: '#1d4ed8', lineHeight: '1.4' }}>
+                      {t.placeMapSubtitle}
+                    </p>
+                  </div>
+                  <span style={{ fontSize: '24px' }}>🧭</span>
+                </div>
+              </div>
+
+              {/* Station Quick Selector (All 15 Stations) */}
+              <div>
+                <label style={{ fontSize: '11px', fontWeight: '800', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '6px' }}>
+                  📍 {t.selectTeraToView}
+                </label>
+                <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '6px' }}>
+                  {COMPLETE_TAXI_TERAS.map(tera => {
+                    const isSelected = selectedPlaceTera && selectedPlaceTera.id === tera.id;
+                    const teraName = lang === 'am' ? tera.name_am.replace(' ታክሲ ተራ', '').replace(' ታክሲ ማቆሚያ', '') : tera.name_en.replace(' Taxi Tera', '').replace(' Taxi Stand', '');
+                    return (
+                      <button
+                        key={tera.id}
+                        onClick={() => handleOpenPlaceMap(tera)}
+                        style={{
+                          flexShrink: 0,
+                          padding: '7px 12px',
+                          background: isSelected ? '#1e3a8a' : '#ffffff',
+                          color: isSelected ? '#ffffff' : '#334155',
+                          border: isSelected ? '1.5px solid #1e3a8a' : '1.5px solid #cbd5e1',
+                          borderRadius: '8px',
+                          fontSize: '11.5px',
+                          fontWeight: isSelected ? '800' : '600',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          boxShadow: isSelected ? '0 2px 8px rgba(30, 58, 138, 0.25)' : 'none'
+                        }}
+                      >
+                        <span>🚕</span>
+                        <span>{teraName}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Walking Origin Selection Card */}
+              {selectedPlaceTera && (
+                <div style={{
+                  background: '#f8fafc',
+                  border: '1.5px solid #e2e8f0',
+                  borderRadius: '12px',
+                  padding: '14px'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <span style={{ fontSize: '12px', fontWeight: '800', color: '#0f172a' }}>
+                      🚶 {t.startFrom}
+                    </span>
+                    {placeWalkingOrigin && placeWalkingDistKm !== null && (
+                      <span style={{ fontSize: '11px', color: '#047857', fontWeight: '700', background: '#dcfce7', padding: '2px 7px', borderRadius: '4px' }}>
+                        {placeWalkingDistKm < 1 ? `${Math.round(placeWalkingDistKm * 1000)}m` : `${placeWalkingDistKm.toFixed(2)} km`} • ~{placeWalkingMins} {t.mins} ({placeWalkingSteps} steps)
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Origin Source Buttons */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginBottom: '10px' }}>
+                    <button
+                      onClick={() => {
+                        handleLocateMe();
+                      }}
+                      style={{
+                        padding: '8px',
+                        background: placeWalkingOrigin && placeWalkingOrigin.id === 'gps' ? '#ecfdf5' : '#ffffff',
+                        border: placeWalkingOrigin && placeWalkingOrigin.id === 'gps' ? '1.5px solid #10b981' : '1px solid #cbd5e1',
+                        color: placeWalkingOrigin && placeWalkingOrigin.id === 'gps' ? '#065f46' : '#334155',
+                        borderRadius: '8px',
+                        fontSize: '11px',
+                        fontWeight: '700',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      📍 {t.myLocation}
+                    </button>
+
+                    <button
+                      onClick={() => setIsPickingMapOrigin(!isPickingMapOrigin)}
+                      style={{
+                        padding: '8px',
+                        background: isPickingMapOrigin ? '#fef3c7' : '#ffffff',
+                        border: isPickingMapOrigin ? '1.5px solid #f59e0b' : '1px solid #cbd5e1',
+                        color: isPickingMapOrigin ? '#92400e' : '#334155',
+                        borderRadius: '8px',
+                        fontSize: '11px',
+                        fontWeight: '700',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      {isPickingMapOrigin ? '🎯 Click Map Now' : '🖱️ Pick on Map'}
+                    </button>
+                  </div>
+
+                  {/* Choose Landmark Dropdown */}
+                  <div>
+                    <label style={{ fontSize: '10.5px', color: '#64748b', fontWeight: '700', display: 'block', marginBottom: '4px' }}>
+                      {t.popularLandmarks}
+                    </label>
+                    <select
+                      value={placeWalkingOrigin ? placeWalkingOrigin.id : ''}
+                      onChange={(e) => {
+                        const lm = ADDIS_STARTING_LANDMARKS.find(l => l.id === e.target.value);
+                        if (lm) {
+                          setPlaceWalkingOrigin(lm);
+                          setRouteBounds([
+                            [Number(lm.lat), Number(lm.lng)],
+                            [Number(selectedPlaceTera.latitude), Number(selectedPlaceTera.longitude)]
+                          ]);
+                        }
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '8px 10px',
+                        borderRadius: '8px',
+                        border: '1.5px solid #cbd5e1',
+                        background: '#ffffff',
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        color: '#0f172a'
+                      }}
+                    >
+                      {ADDIS_STARTING_LANDMARKS.map(lm => (
+                        <option key={lm.id} value={lm.id}>
+                          {lang === 'am' ? lm.name_am : lm.name_en}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              {/* Active Station Full Details Card */}
+              {selectedPlaceTera && (
+                <div style={{
+                  background: '#ffffff',
+                  border: '2px solid #facc15',
+                  borderRadius: '14px',
+                  padding: '16px',
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.06)'
+                }}>
+                  {/* Station Name & Subcity */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ fontSize: '20px' }}>🚕</span>
+                        <h4 style={{ margin: 0, fontSize: '16px', fontWeight: '900', color: '#0f172a' }}>
+                          {lang === 'am' ? selectedPlaceTera.name_am : selectedPlaceTera.name_en}
+                        </h4>
+                      </div>
+                      <span style={{ fontSize: '11px', color: '#854d0e', background: '#fef9c3', padding: '2px 6px', borderRadius: '4px', fontWeight: '700', marginTop: '4px', display: 'inline-block' }}>
+                        {selectedPlaceTera.subcity} Subcity • {selectedPlaceTera.operating_hours}
+                      </span>
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        setMapCenter([Number(selectedPlaceTera.latitude), Number(selectedPlaceTera.longitude)]);
+                        setMapZoom(17);
+                      }}
+                      style={{
+                        padding: '6px 10px',
+                        background: '#fef08a',
+                        border: '1px solid #eab308',
+                        color: '#713f12',
+                        borderRadius: '8px',
+                        fontSize: '11px',
+                        fontWeight: '800',
+                        cursor: 'pointer'
+                      }}
+                      title="Zoom into station at street level"
+                    >
+                      🔍 {t.zoomStationHd}
+                    </button>
+                  </div>
+
+                  {/* Exact Place & Surroundings */}
+                  <div style={{
+                    background: '#fefce8',
+                    border: '1px solid #fef08a',
+                    borderRadius: '10px',
+                    padding: '10px 12px',
+                    marginBottom: '12px'
+                  }}>
+                    <div style={{ fontSize: '11px', fontWeight: '800', color: '#713f12', marginBottom: '4px' }}>
+                      📍 Exact Physical Location:
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#1e293b', fontWeight: '600', lineHeight: '1.4' }}>
+                      {lang === 'am' ? selectedPlaceTera.exact_location_am : selectedPlaceTera.exact_location_en}
+                    </div>
+                  </div>
+
+                  {/* Conductor Callout Shout */}
+                  {selectedPlaceTera.weyala_shout && (
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      background: '#fffbeb',
+                      border: '1px solid #fde68a',
+                      borderRadius: '8px',
+                      padding: '8px 10px',
+                      marginBottom: '12px'
+                    }}>
+                      <div>
+                        <div style={{ fontSize: '10px', color: '#92400e', fontWeight: '700' }}>
+                          🗣️ Listen for Conductor Shout:
+                        </div>
+                        <strong style={{ fontSize: '12.5px', color: '#78350f' }}>
+                          "{selectedPlaceTera.weyala_shout}"
+                        </strong>
+                      </div>
+                      <button
+                        onClick={() => playWeyalaAudio(selectedPlaceTera.weyala_shout)}
+                        style={{
+                          border: 'none',
+                          background: '#fde047',
+                          padding: '6px 10px',
+                          borderRadius: '6px',
+                          fontSize: '11px',
+                          fontWeight: '800',
+                          cursor: 'pointer',
+                          color: '#713f12'
+                        }}
+                      >
+                        🔊 Shout
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Surrounding Landmarks Cards */}
+                  {selectedPlaceTera.landmarks && selectedPlaceTera.landmarks.length > 0 && (
+                    <div style={{ marginBottom: '14px' }}>
+                      <div style={{ fontSize: '11px', fontWeight: '800', color: '#475569', textTransform: 'uppercase', marginBottom: '6px' }}>
+                        🏛️ {t.nearbyLandmarks}
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '6px' }}>
+                        {selectedPlaceTera.landmarks.map((lm, i) => (
+                          <div
+                            key={i}
+                            onClick={() => {
+                              setMapCenter([lm.lat, lm.lng]);
+                              setMapZoom(18);
+                            }}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px',
+                              background: '#f8fafc',
+                              border: '1px solid #e2e8f0',
+                              borderRadius: '8px',
+                              padding: '8px 10px',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            <span style={{ fontSize: '18px' }}>{lm.icon}</span>
+                            <div style={{ flex: 1 }}>
+                              <div style={{ fontSize: '12px', fontWeight: '800', color: '#0f172a' }}>
+                                {lang === 'am' && lm.name_am ? lm.name_am : lm.name}
+                              </div>
+                              <div style={{ fontSize: '11px', color: '#64748b' }}>
+                                {lm.tip}
+                              </div>
+                            </div>
+                            <span style={{ fontSize: '10.5px', color: '#3b82f6', fontWeight: '700' }}>
+                              View ↗
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Step-by-Step Walking Directions */}
+                  {((lang === 'am' && selectedPlaceTera.walking_steps_am) || selectedPlaceTera.walking_steps_en) && (
+                    <div style={{ marginBottom: '14px' }}>
+                      <div style={{ fontSize: '11px', fontWeight: '800', color: '#475569', textTransform: 'uppercase', marginBottom: '6px' }}>
+                        🚶 {t.walkingSteps}
+                      </div>
+                      <div style={{ background: '#f1f5f9', borderRadius: '10px', padding: '10px 12px', border: '1px solid #e2e8f0' }}>
+                        {(lang === 'am' ? (selectedPlaceTera.walking_steps_am || selectedPlaceTera.walking_steps_en) : selectedPlaceTera.walking_steps_en).map((step, idx) => (
+                          <div key={idx} style={{ display: 'flex', gap: '8px', marginBottom: idx === 3 ? 0 : '8px', alignItems: 'flex-start' }}>
+                            <span style={{
+                              background: '#1e3a8a',
+                              color: '#ffffff',
+                              width: '18px',
+                              height: '18px',
+                              borderRadius: '50%',
+                              fontSize: '10.5px',
+                              fontWeight: '800',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              flexShrink: 0,
+                              marginTop: '2px'
+                            }}>
+                              {idx + 1}
+                            </span>
+                            <span style={{ fontSize: '11.5px', color: '#334155', lineHeight: '1.4' }}>
+                              {step}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Minibus Queue Lanes & Boarding Spots */}
+                  {selectedPlaceTera.queue_spots && selectedPlaceTera.queue_spots.length > 0 && (
+                    <div style={{ marginBottom: '14px' }}>
+                      <div style={{ fontSize: '11px', fontWeight: '800', color: '#475569', textTransform: 'uppercase', marginBottom: '6px' }}>
+                        🚕 {t.queueLanes}
+                      </div>
+                      <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden' }}>
+                        {selectedPlaceTera.queue_spots.map((qs, i) => (
+                          <div
+                            key={i}
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              padding: '8px 10px',
+                              background: i % 2 === 0 ? '#ffffff' : '#f8fafc',
+                              borderBottom: i < selectedPlaceTera.queue_spots.length - 1 ? '1px solid #f1f5f9' : 'none'
+                            }}
+                          >
+                            <div>
+                              <div style={{ fontSize: '12px', fontWeight: '800', color: '#0f172a' }}>
+                                • {qs.dest}
+                              </div>
+                              <div style={{ fontSize: '10.5px', color: '#854d0e', fontWeight: '600' }}>
+                                📍 {qs.bay}
+                              </div>
+                            </div>
+                            <span style={{ fontSize: '11px', fontWeight: '800', color: '#15803d', background: '#dcfce7', padding: '2px 6px', borderRadius: '4px' }}>
+                              {qs.fare} ETB
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Live Google Maps Walking Navigation Button */}
+                  <a
+                    href={`https://www.google.com/maps/dir/?api=1&origin=${placeWalkingOrigin ? `${placeWalkingOrigin.lat},${placeWalkingOrigin.lng}` : ''}&destination=${selectedPlaceTera.latitude},${selectedPlaceTera.longitude}&travelmode=walking`}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      width: '100%',
+                      padding: '12px',
+                      background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
+                      color: '#ffffff',
+                      borderRadius: '10px',
+                      fontSize: '12.5px',
+                      fontWeight: '800',
+                      textDecoration: 'none',
+                      boxShadow: '0 4px 14px rgba(22, 163, 74, 0.35)',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <span>🧭</span>
+                    <span>{t.openInGoogleMapsWalk}</span>
+                  </a>
+                </div>
               )}
             </div>
           )}
@@ -1512,6 +2586,28 @@ export default function App() {
                         </div>
 
                         <div style={{ display: 'flex', gap: '6px' }}>
+                          <button
+                            onClick={() => handleOpenPlaceMap(tera)}
+                            style={{
+                              flex: 1,
+                              padding: '8px',
+                              background: '#eff6ff',
+                              border: '1.5px solid #60a5fa',
+                              color: '#1d4ed8',
+                              borderRadius: '8px',
+                              fontSize: '11px',
+                              fontWeight: '800',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '4px'
+                            }}
+                            title="Open station place map, landmarks & walking directions"
+                          >
+                            <span>📍</span>
+                            <span>{t.tabPlaceMap || 'Place Map'}</span>
+                          </button>
                           <button
                             onClick={() => {
                               setMapCenter([Number(tera.latitude), Number(tera.longitude)]);
@@ -1952,6 +3048,28 @@ export default function App() {
                   </div>
 
                   <div style={{ display: 'flex', gap: '6px' }}>
+                    <button
+                      onClick={() => handleOpenPlaceMap(tera)}
+                      style={{
+                        flex: 1,
+                        padding: '6px',
+                        background: '#eff6ff',
+                        border: '1.5px solid #60a5fa',
+                        color: '#1d4ed8',
+                        borderRadius: '6px',
+                        fontSize: '11px',
+                        fontWeight: '800',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '4px'
+                      }}
+                      title="Open station place map, landmarks & walking directions"
+                    >
+                      <span>📍</span>
+                      <span>{t.tabPlaceMap || 'Place Map'}</span>
+                    </button>
                     <button
                       onClick={() => {
                         setMapCenter([Number(tera.latitude), Number(tera.longitude)]);
@@ -2602,24 +3720,88 @@ export default function App() {
 
             <div style={{ width: '1px', height: '22px', background: '#cbd5e1' }} />
 
-            <input
-              type="text"
-              placeholder={t.searchOriginOrDest}
-              value={taxiLineQuery}
-              onChange={e => {
-                setTaxiLineQuery(e.target.value);
-                if (!isSidebarOpen) setIsSidebarOpen(true);
-              }}
+            {/* Quick Beginning input on full map */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: '#f0fdf4', padding: '3px 8px', borderRadius: '7px', border: '1.5px solid #86efac' }}>
+              <span style={{ fontSize: '11px' }}>🟢</span>
+              <input
+                type="text"
+                placeholder={lang === 'am' ? 'መነሻ...' : 'Beginning...'}
+                value={beginningQuery}
+                onChange={e => setBeginningQuery(e.target.value)}
+                style={{
+                  border: 'none',
+                  background: 'transparent',
+                  fontSize: '11.5px',
+                  fontWeight: '600',
+                  color: '#0f172a',
+                  outline: 'none',
+                  width: '110px'
+                }}
+              />
+              {beginningQuery && (
+                <button onClick={() => setBeginningQuery('')} style={{ border: 'none', background: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '10px', padding: 0 }}>✕</button>
+              )}
+            </div>
+
+            {/* Swap button */}
+            <button
+              onClick={handleSwapTaxiInputs}
+              title={t.swapBegEnd}
               style={{
-                border: 'none',
-                background: 'transparent',
-                fontSize: '12px',
-                fontWeight: '600',
-                color: '#0f172a',
-                outline: 'none',
-                width: '180px'
+                background: '#ffffff',
+                border: '1px solid #cbd5e1',
+                borderRadius: '50%',
+                width: '24px',
+                height: '24px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                fontSize: '11px',
+                color: '#854d0e',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
               }}
-            />
+            >
+              ⇄
+            </button>
+
+            {/* Quick End input on full map */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: '#fef2f2', padding: '3px 8px', borderRadius: '7px', border: '1.5px solid #fca5a5' }}>
+              <span style={{ fontSize: '11px' }}>🔴</span>
+              <input
+                type="text"
+                placeholder={lang === 'am' ? 'መድረሻ...' : 'End...'}
+                value={endingQuery}
+                onChange={e => setEndingQuery(e.target.value)}
+                style={{
+                  border: 'none',
+                  background: 'transparent',
+                  fontSize: '11.5px',
+                  fontWeight: '600',
+                  color: '#0f172a',
+                  outline: 'none',
+                  width: '110px'
+                }}
+              />
+              {endingQuery && (
+                <button onClick={() => setEndingQuery('')} style={{ border: 'none', background: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '10px', padding: 0 }}>✕</button>
+              )}
+            </div>
+
+            {(beginningQuery || endingQuery) && (
+              <span style={{
+                fontSize: '10.5px',
+                fontWeight: '800',
+                color: '#166534',
+                background: '#dcfce7',
+                padding: '3px 7px',
+                borderRadius: '6px',
+                border: '1px solid #86efac',
+                whiteSpace: 'nowrap'
+              }}>
+                {filteredTaxiLines.length} {t.routesFound}
+              </span>
+            )}
           </div>
         )}
 
@@ -3126,6 +4308,175 @@ export default function App() {
             />
           )}
 
+          {/* Interactive Map Click for Walking Origin */}
+          <MapClickHandler
+            enabled={isPickingMapOrigin}
+            onMapClick={(latlng) => {
+              setPlaceWalkingOrigin({
+                id: 'custom_click',
+                name_en: 'Selected Point on Map',
+                name_am: 'በካርታ ላይ የተመረጠ ቦታ',
+                name_ti: 'ኣብ ካርታ ዝተመረጸ ቦታ',
+                lat: latlng.lat,
+                lng: latlng.lng
+              });
+              setIsPickingMapOrigin(false);
+              if (selectedPlaceTera) {
+                setRouteBounds([
+                  [latlng.lat, latlng.lng],
+                  [Number(selectedPlaceTera.latitude), Number(selectedPlaceTera.longitude)]
+                ]);
+              }
+            }}
+          />
+
+          {/* Station Place Map: Footprint Ranking Zone */}
+          {selectedPlaceTera && (
+            <Circle
+              center={[Number(selectedPlaceTera.latitude), Number(selectedPlaceTera.longitude)]}
+              radius={95}
+              pathOptions={{
+                color: '#eab308',
+                fillColor: '#fef08a',
+                fillOpacity: 0.35,
+                weight: 2.5,
+                dashArray: '5, 5'
+              }}
+            >
+              <Tooltip direction="top" opacity={0.9}>
+                <span>🚕 {lang === 'am' ? selectedPlaceTera.name_am : selectedPlaceTera.name_en} - {t.stationAreaFootprint}</span>
+              </Tooltip>
+            </Circle>
+          )}
+
+          {/* Station Place Map: Pulsing Radar Marker */}
+          {selectedPlaceTera && (
+            <Marker
+              position={[Number(selectedPlaceTera.latitude), Number(selectedPlaceTera.longitude)]}
+              icon={createStationRadarIcon()}
+              zIndexOffset={2000}
+            >
+              <Popup>
+                <div style={{ minWidth: '220px', padding: '6px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                    <span style={{ fontSize: '18px' }}>🚕</span>
+                    <strong style={{ fontSize: '14px', color: '#0f172a' }}>
+                      {lang === 'am' ? selectedPlaceTera.name_am : selectedPlaceTera.name_en}
+                    </strong>
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#854d0e', fontWeight: '700', marginBottom: '6px' }}>
+                    📍 {lang === 'am' ? selectedPlaceTera.exact_location_am : selectedPlaceTera.exact_location_en}
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#334155', background: '#fefce8', padding: '6px', borderRadius: '6px', marginBottom: '6px' }}>
+                    🗣️ <em>"{selectedPlaceTera.weyala_shout}"</em>
+                  </div>
+                  <a
+                    href={`https://www.google.com/maps/dir/?api=1&origin=${placeWalkingOrigin ? `${placeWalkingOrigin.lat},${placeWalkingOrigin.lng}` : ''}&destination=${selectedPlaceTera.latitude},${selectedPlaceTera.longitude}&travelmode=walking`}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{
+                      display: 'block',
+                      textAlign: 'center',
+                      padding: '6px',
+                      background: '#16a34a',
+                      color: '#ffffff',
+                      borderRadius: '6px',
+                      fontSize: '11px',
+                      fontWeight: '700',
+                      textDecoration: 'none'
+                    }}
+                  >
+                    🚶 {t.openInGoogleMapsWalk}
+                  </a>
+                </div>
+              </Popup>
+              <Tooltip permanent direction="top" className="transit-station-label-origin">
+                <span>
+                  ⭐ {lang === 'am' ? selectedPlaceTera.name_am.replace(' ታክሲ ተራ', '').replace(' ታክሲ ማቆሚያ', '') : selectedPlaceTera.name_en.replace(' Taxi Tera', '').replace(' Taxi Stand', '')}
+                </span>
+              </Tooltip>
+            </Marker>
+          )}
+
+          {/* Station Place Map: Physical Surrounding Landmarks */}
+          {selectedPlaceTera && selectedPlaceTera.landmarks && selectedPlaceTera.landmarks.map((lm, idx) => (
+            <Marker
+              key={`place-lm-${idx}`}
+              position={[lm.lat, lm.lng]}
+              icon={createLandmarkIcon(lm.icon)}
+            >
+              <Popup>
+                <div style={{ padding: '4px', maxWidth: '200px' }}>
+                  <div style={{ fontWeight: '800', fontSize: '12.5px', color: '#1e1b4b', marginBottom: '2px' }}>
+                    {lm.icon} {lang === 'am' && lm.name_am ? lm.name_am : lm.name}
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#475569' }}>
+                    {lm.tip}
+                  </div>
+                </div>
+              </Popup>
+              <Tooltip direction="bottom" offset={[0, 6]} className="transit-landmark-tooltip">
+                <span>{lm.icon} {lang === 'am' && lm.name_am ? lm.name_am : lm.name}</span>
+              </Tooltip>
+            </Marker>
+          ))}
+
+          {/* Station Place Map: Walking Origin Marker & Polyline */}
+          {selectedPlaceTera && placeWalkingOrigin && (
+            <>
+              <Marker
+                position={[Number(placeWalkingOrigin.lat), Number(placeWalkingOrigin.lng)]}
+                icon={createWalkingOriginIcon()}
+              >
+                <Popup>
+                  <div style={{ padding: '4px' }}>
+                    <div style={{ fontWeight: '800', color: '#047857', fontSize: '12px' }}>
+                      🚩 {t.startFrom}
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#334155' }}>
+                      {lang === 'am' && placeWalkingOrigin.name_am ? placeWalkingOrigin.name_am : placeWalkingOrigin.name_en}
+                    </div>
+                  </div>
+                </Popup>
+                <Tooltip permanent direction="bottom" className="transit-station-label-dest">
+                  <span>🚩 {lang === 'am' && placeWalkingOrigin.name_am ? placeWalkingOrigin.name_am : placeWalkingOrigin.name_en}</span>
+                </Tooltip>
+              </Marker>
+
+              {/* Walking Casing & Path Line */}
+              <Polyline
+                positions={[
+                  [Number(placeWalkingOrigin.lat), Number(placeWalkingOrigin.lng)],
+                  [Number(selectedPlaceTera.latitude), Number(selectedPlaceTera.longitude)]
+                ]}
+                pathOptions={{
+                  color: '#ffffff',
+                  weight: 9,
+                  opacity: 0.95
+                }}
+              />
+              <Polyline
+                positions={[
+                  [Number(placeWalkingOrigin.lat), Number(placeWalkingOrigin.lng)],
+                  [Number(selectedPlaceTera.latitude), Number(selectedPlaceTera.longitude)]
+                ]}
+                pathOptions={{
+                  color: '#7c3aed',
+                  weight: 5,
+                  dashArray: '8, 8',
+                  opacity: 1.0,
+                  lineCap: 'round'
+                }}
+              >
+                <Tooltip sticky>
+                  <div style={{ fontSize: '11.5px', fontWeight: '700' }}>
+                    🚶 {placeWalkingDistKm < 1 ? `${Math.round(placeWalkingDistKm * 1000)}m` : `${placeWalkingDistKm.toFixed(2)} km`} • ~{placeWalkingMins} {t.mins} ({placeWalkingSteps} steps)
+                  </div>
+                </Tooltip>
+              </Polyline>
+            </>
+          )}
+
           {/* Render Route Polylines */}
           {filteredRoutes.map(route => {
             const isLrt = route.transport_type === 'lrt';
@@ -3258,6 +4609,24 @@ export default function App() {
                       </div>
                     ))}
                   </div>
+
+                  <button
+                    onClick={() => handleOpenPlaceMap(tera)}
+                    style={{
+                      width: '100%',
+                      padding: '7px',
+                      background: '#eff6ff',
+                      border: '1.5px solid #60a5fa',
+                      color: '#1d4ed8',
+                      borderRadius: '6px',
+                      fontSize: '11px',
+                      fontWeight: '800',
+                      cursor: 'pointer',
+                      marginBottom: '6px'
+                    }}
+                  >
+                    🗺️ {t.tabPlaceMap || 'Place Map & Guide'}
+                  </button>
 
                   <button
                     onClick={() => {
@@ -3496,6 +4865,122 @@ export default function App() {
             >
               ✕
             </button>
+          </div>
+        )}
+
+        {/* Floating Station Place Guide on the Map */}
+        {selectedPlaceTera && showPlaceGuideOverlay && (
+          <div style={{
+            position: 'absolute',
+            bottom: '24px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 1000,
+            background: 'rgba(255, 255, 255, 0.98)',
+            backdropFilter: 'blur(8px)',
+            borderRadius: '14px',
+            padding: '12px 18px',
+            boxShadow: '0 8px 30px rgba(0,0,0,0.2)',
+            border: '2px solid #facc15',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '14px',
+            maxWidth: '92%',
+            flexWrap: 'wrap'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '24px' }}>🚕</span>
+              <div>
+                <div style={{ fontSize: '13px', fontWeight: '900', color: '#0f172a' }}>
+                  {lang === 'am' ? selectedPlaceTera.name_am : selectedPlaceTera.name_en}
+                </div>
+                <div style={{ fontSize: '11px', color: '#64748b' }}>
+                  📍 {lang === 'am' ? selectedPlaceTera.exact_location_am : selectedPlaceTera.exact_location_en}
+                </div>
+                {placeWalkingOrigin && placeWalkingDistKm !== null && (
+                  <div style={{ fontSize: '11px', color: '#047857', fontWeight: '700', marginTop: '2px' }}>
+                    🚶 {placeWalkingDistKm < 1 ? `${Math.round(placeWalkingDistKm * 1000)}m` : `${placeWalkingDistKm.toFixed(1)} km`} walk (~{placeWalkingMins} {t.mins}) from {lang === 'am' && placeWalkingOrigin.name_am ? placeWalkingOrigin.name_am : placeWalkingOrigin.name_en}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: 'auto' }}>
+              <button
+                onClick={() => {
+                  setMapCenter([Number(selectedPlaceTera.latitude), Number(selectedPlaceTera.longitude)]);
+                  setMapZoom(17);
+                }}
+                style={{
+                  padding: '6px 10px',
+                  background: '#fef08a',
+                  border: '1px solid #facc15',
+                  color: '#713f12',
+                  borderRadius: '8px',
+                  fontSize: '11px',
+                  fontWeight: '700',
+                  cursor: 'pointer'
+                }}
+                title="Zoom into station street level"
+              >
+                🔍 HD
+              </button>
+
+              {placeWalkingOrigin && (
+                <button
+                  onClick={() => {
+                    setRouteBounds([
+                      [Number(placeWalkingOrigin.lat), Number(placeWalkingOrigin.lng)],
+                      [Number(selectedPlaceTera.latitude), Number(selectedPlaceTera.longitude)]
+                    ]);
+                  }}
+                  style={{
+                    padding: '6px 10px',
+                    background: '#ede9fe',
+                    border: '1px solid #c4b5fd',
+                    color: '#6d28d9',
+                    borderRadius: '8px',
+                    fontSize: '11px',
+                    fontWeight: '700',
+                    cursor: 'pointer'
+                  }}
+                  title="View complete walking route"
+                >
+                  🚶 Route
+                </button>
+              )}
+
+              <a
+                href={`https://www.google.com/maps/dir/?api=1&origin=${placeWalkingOrigin ? `${placeWalkingOrigin.lat},${placeWalkingOrigin.lng}` : ''}&destination=${selectedPlaceTera.latitude},${selectedPlaceTera.longitude}&travelmode=walking`}
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  padding: '6px 12px',
+                  background: '#16a34a',
+                  color: '#ffffff',
+                  borderRadius: '8px',
+                  fontSize: '11px',
+                  fontWeight: '800',
+                  textDecoration: 'none',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                🗺️ Navigate
+              </a>
+
+              <button
+                onClick={() => setShowPlaceGuideOverlay(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '16px',
+                  cursor: 'pointer',
+                  color: '#94a3b8'
+                }}
+              >
+                ✕
+              </button>
+            </div>
           </div>
         )}
       </div>
